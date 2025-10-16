@@ -1,0 +1,144 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { Injectable, Inject } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Cache } from 'cache-manager';
+import { RegisterDto } from './dto/register.dto';
+import { User, UserRepo } from 'src/core';
+import { MailService } from './mail.service';
+import { generateOTP } from 'src/infrastructure/lib/otp-generator/generateOTP';
+import { BcryptEncryption } from 'src/infrastructure/lib/bcrypt';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { IPayload } from 'src/infrastructure/lib/prompts/types';
+import { JwtService } from '@nestjs/jwt';
+import { config } from 'src/config';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private readonly mail: MailService,
+    @InjectRepository(User) private readonly userRepo: UserRepo,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
+    private jwt: JwtService,
+  ) {}
+  async register(dto: RegisterDto) {
+    const userExists = await this.userRepo.findOne({
+      where: { email: dto.email },
+    });
+
+    if (userExists) {
+      return {
+        status_code: 409,
+        message: 'This email already taken',
+        data: {},
+      };
+    }
+
+    const newUser = this.userRepo.create({
+      ...dto,
+      password: await BcryptEncryption.encrypt(dto.password),
+    });
+
+    const otpPassword = String(generateOTP());
+
+    await this.cache.set(`confirmation-${newUser.email}`, otpPassword);
+
+    const html = `
+      <div style="background:#f4f4f4;padding:20px;font-family:Arial,sans-serif;">
+        <div style="max-width:600px;margin:auto;background:#fff;padding:20px;border-radius:8px;">
+          <h2 style="color:#007a3d;text-align:center;">UstaGo</h2>
+          <p style="font-size:16px;">Assalomu alaykum 👋 ${newUser.email}</p>
+          <p>Sizning Tasdiqlash kodingiz: <code><b style="color:#ff5722;">${otpPassword}</b></code></p>
+          <p style="font-size:14px;color:#777;">Kod 5 daqiqa amal qiladi</p>
+        </div>
+      </div>
+    `;
+
+    await this.mail.sendHtmlMail(newUser.email, 'Otp password', html);
+
+    await this.userRepo.save(newUser);
+
+    return {
+      status_code: 201,
+      message: `User created succsessfuly and sended OTP password to ${newUser.email}`,
+      data: {},
+    };
+  }
+
+  async verify(email: string, otp: number) {
+    const otpCode: undefined | number = await this.cache.get(
+      `confirmation-${email}`,
+    );
+    console.log({ otpCode, otp });
+    if (otpCode === undefined) {
+      return {
+        status_code: 404,
+        message: 'Otp code not found',
+        data: {},
+      };
+    }
+    if (otp != otpCode) {
+      return {
+        status_code: 400,
+        message: "Otp code didn't match",
+        data: {},
+      };
+    }
+    await this.userRepo.update({ email }, { is_vertfied: true });
+    await this.cache.del(`confirmation-${email}`);
+    return {
+      status_code: 200,
+      message: 'User verified successfuly',
+      data: {},
+    };
+  }
+
+  async login(email: string, pass: string) {
+    const user = await this.userRepo.findOne({ where: { email } });
+    if (!user) {
+      return {
+        status_code: 404,
+        message: 'User not found',
+        data: {},
+      };
+    }
+    const passwordsSame = await BcryptEncryption.compare(pass, user.password);
+    if (!passwordsSame) {
+      return {
+        status_code: 401,
+        message: "Passwords didn't match",
+        data: {},
+      };
+    }
+    if (!user.is_vertfied) {
+      return {
+        status_code: 403,
+        message: 'User not verified',
+        data: {},
+      };
+    }
+    const payload: IPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const token = this.jwt.sign(payload, {
+      secret: config.ACCESS_TOKEN_KEY,
+      expiresIn: '30d',
+    });
+
+    const { password, ...data } = user;
+
+    return {
+      status_code: 200,
+      message: 'Successful login',
+      data: {
+        token,
+        user: {
+          ...data,
+        },
+      },
+    };
+  }
+}
