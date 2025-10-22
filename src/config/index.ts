@@ -11,6 +11,8 @@ export type ConfigType = {
   EMAIL_PORT: number;
   EMAIL_USER: string;
   APP_PASSWORD: string;
+  CLIENT_ID: string;
+  CLIENT_SECRET: string;
 };
 
 export const config: ConfigType = {
@@ -22,4 +24,6 @@ export const config: ConfigType = {
   EMAIL_PORT: parseInt(process.env.EMAIL_PORT as string, 10),
   EMAIL_USER: process.env.EMAIL_USER as string,
   APP_PASSWORD: process.env.APP_PASSWORD as string,
+  CLIENT_ID: process.env.CLIENT_ID as string,
+  CLIENT_SECRET: process.env.CLIENT_SECRET as string,
 };

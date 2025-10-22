@@ -4,16 +4,13 @@ import { RoleUser } from 'src/common/enum';
 
 @Entity()
 export class User extends BaseEntity {
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   full_name: string;
 
   @Column({ nullable: false, unique: true })
   email: string;
 
-  @Column({ nullable: false })
-  password: string;
-
-  @Column({ type: 'enum', enum: RoleUser })
+  @Column({ type: 'enum', enum: RoleUser, default: RoleUser.USER })
   role: RoleUser;
 
   @Column({ nullable: true })
@@ -32,5 +29,5 @@ export class User extends BaseEntity {
   location: string;
 
   @Column({ default: false })
-  is_vertfied: boolean;
+  is_verified: boolean;
 }
