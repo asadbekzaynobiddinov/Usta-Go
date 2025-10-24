@@ -145,7 +145,6 @@ export class AuthService {
       where: { email: googleProfile.emails[0].value },
     });
     if (!user) {
-      console.log('Creating new user via Google Auth');
       try {
         const newUser = this.userRepo.create({
           email: googleProfile.emails[0].value,
@@ -182,7 +181,6 @@ export class AuthService {
         };
       }
     }
-    console.log('User found, logging in via Google Auth');
     const payload: IPayload = {
       sub: user.id,
       email: user.email,
