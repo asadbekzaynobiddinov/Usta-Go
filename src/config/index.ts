@@ -13,6 +13,8 @@ export type ConfigType = {
   APP_PASSWORD: string;
   CLIENT_ID: string;
   CLIENT_SECRET: string;
+  SUPER_ADMIN_EMAIL: string;
+  SUPER_ADMIN_PASSWORD: string;
 };
 
 export const config: ConfigType = {
@@ -26,4 +28,6 @@ export const config: ConfigType = {
   APP_PASSWORD: process.env.APP_PASSWORD as string,
   CLIENT_ID: process.env.CLIENT_ID as string,
   CLIENT_SECRET: process.env.CLIENT_SECRET as string,
+  SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL as string,
+  SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD as string,
 };

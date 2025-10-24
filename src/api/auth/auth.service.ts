@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cache } from 'cache-manager';
-import { User, UserRepo } from 'src/core';
+import { User, UserRepository } from 'src/core';
 import { MailService } from './mail.service';
 // import { generateOTP } from 'src/infrastructure/lib/otp-generator/generateOTP';
 // import { BcryptEncryption } from 'src/infrastructure/lib/bcrypt';
@@ -15,12 +15,12 @@ import { config } from 'src/config';
 export class AuthService {
   constructor(
     private readonly mail: MailService,
-    @InjectRepository(User) private readonly userRepo: UserRepo,
+    @InjectRepository(User) private readonly userRepository: UserRepository,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
     private jwt: JwtService,
   ) {}
   // async register(dto: RegisterDto) {
-  //   const userExists = await this.userRepo.findOne({
+  //   const userExists = await this.userRepository.findOne({
   //     where: { email: dto.email },
   //   });
 
@@ -32,7 +32,7 @@ export class AuthService {
   //     };
   //   }
 
-  //   const newUser = this.userRepo.create({
+  //   const newUser = this.userRepository.create({
   //     ...dto,
   //     password: await BcryptEncryption.encrypt(dto.password),
   //   });
@@ -54,7 +54,7 @@ export class AuthService {
 
   //   await this.mail.sendHtmlMail(newUser.email, 'Otp password', html);
 
-  //   await this.userRepo.save(newUser);
+  //   await this.userRepository.save(newUser);
 
   //   return {
   //     status_code: 201,
@@ -82,7 +82,7 @@ export class AuthService {
   //       data: {},
   //     };
   //   }
-  //   await this.userRepo.update({ email }, { is_vertfied: true });
+  //   await this.userRepository.update({ email }, { is_vertfied: true });
   //   await this.cache.del(`confirmation-${email}`);
   //   return {
   //     status_code: 200,
@@ -92,7 +92,7 @@ export class AuthService {
   // }
 
   // async login(email: string, pass: string) {
-  //   const user = await this.userRepo.findOne({ where: { email } });
+  //   const user = await this.userRepository.findOne({ where: { email } });
   //   if (!user) {
   //     return {
   //       status_code: 404,
@@ -141,18 +141,18 @@ export class AuthService {
   // }
 
   async googleAuth(googleProfile: IGoogleProfile) {
-    const user = await this.userRepo.findOne({
+    const user = await this.userRepository.findOne({
       where: { email: googleProfile.emails[0].value },
     });
     if (!user) {
       try {
-        const newUser = this.userRepo.create({
+        const newUser = this.userRepository.create({
           email: googleProfile.emails[0].value,
           full_name: googleProfile.displayName,
           avatar_url: googleProfile.photos[0]?.value,
           is_verified: true,
         });
-        await this.userRepo.save(newUser);
+        await this.userRepository.save(newUser);
         const payload: IPayload = {
           sub: newUser.id,
           email: newUser.email,
