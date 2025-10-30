@@ -8,7 +8,7 @@ export class BaseEntity {
   @Column({
     name: 'created_at',
     type: 'bigint',
-    default: () => 'EXTRACT(epoch FROM NOW()) * 1000',
+    default: Date.now(),
   })
   created_at: number;
 

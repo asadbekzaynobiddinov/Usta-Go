@@ -17,5 +17,5 @@ export class Admin extends BaseEntity {
   phone: string;
 
   @Column({ type: 'boolean', default: true })
-  isActive: boolean;
+  is_active: boolean;
 }

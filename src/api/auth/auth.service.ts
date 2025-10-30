@@ -148,15 +148,14 @@ export class AuthService {
       try {
         const newUser = this.userRepository.create({
           email: googleProfile.emails[0].value,
-          full_name: googleProfile.displayName,
+          first_name: googleProfile.name.givenName,
+          last_name: googleProfile.name.familyName,
           avatar_url: googleProfile.photos[0]?.value,
-          is_verified: true,
         });
         await this.userRepository.save(newUser);
         const payload: IPayload = {
           sub: newUser.id,
           email: newUser.email,
-          role: newUser.role,
         };
         const token = this.jwt.sign(payload, {
           secret: config.ACCESS_TOKEN_KEY,
@@ -184,7 +183,6 @@ export class AuthService {
     const payload: IPayload = {
       sub: user.id,
       email: user.email,
-      role: user.role,
     };
     const token = this.jwt.sign(payload, {
       secret: config.ACCESS_TOKEN_KEY,

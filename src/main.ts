@@ -17,15 +17,12 @@ void (async () => {
   });
 
   try {
-    console.log(config.SUPER_ADMIN_EMAIL, config.SUPER_ADMIN_PASSWORD);
     await dataSource.initialize();
     console.log('Database connection established.');
 
     const adminRepository = dataSource.getRepository(Admin);
 
     const hashedPassword = await bcrypt.hash(config.SUPER_ADMIN_PASSWORD, 10);
-
-    console.log(hashedPassword);
 
     const superAdminExists = await adminRepository.findOneBy({
       email: config.SUPER_ADMIN_EMAIL,

@@ -5,7 +5,6 @@ import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import { config } from 'src/config';
 import { AuthModule } from './auth/auth.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { UserModule } from './user/user.module';
 import { AdminModule } from './admin/admin.module';
 
 @Module({
@@ -23,7 +22,6 @@ import { AdminModule } from './admin/admin.module';
       ttl: 60,
     }),
     AuthModule,
-    UserModule,
     AdminModule,
   ],
   providers: [

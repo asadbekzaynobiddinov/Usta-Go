@@ -1,31 +1,55 @@
-import { Entity, Column, ManyToOne } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
 import { OrderStatus } from 'src/common/enum';
 import { User } from './user.entity';
-import { Services } from './services.entity';
+import { MasterProfile } from './master-profile.entity';
+import { OrderPictures } from './order-pictures.entity';
 
 @Entity()
 export class Orders extends BaseEntity {
+  @ManyToOne(() => User, (user) => user.orders, { onDelete: 'CASCADE' })
+  user: User;
+
+  @ManyToOne(() => MasterProfile, (master) => master.orders)
+  master: MasterProfile;
+
+  @Column({ nullable: false })
+  title: string;
+
   @Column({ nullable: true, type: 'text' })
   description: string;
 
-  @Column({ nullable: false })
-  address: string;
-
-  @Column({ nullable: false })
-  price: number;
-
-  @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.ACTIVE })
+  @Column({
+    nullable: false,
+    type: 'enum',
+    enum: OrderStatus,
+    default: OrderStatus.ACTIVE,
+  })
   status: OrderStatus;
 
-  @ManyToOne(() => User, (user) => user.userOrders, { onDelete: 'CASCADE' })
-  client: User;
+  @Column({ type: 'jsonb', nullable: false })
+  address: {
+    country: string;
+    region: string;
+    city: string;
+    street: string;
+    building: string;
+    postalCode: string;
+    coordinates: { lat: number; lng: number };
+  };
 
-  @ManyToOne(() => User, (user) => user.masterOrders, { onDelete: 'SET NULL' })
-  master: User;
+  @Column({ nullable: true, type: 'date' })
+  scheduled_at: Date;
 
-  @ManyToOne(() => Services, (services) => services.orders, {
-    onDelete: 'SET NULL',
-  })
-  service: Services;
+  @Column({ nullable: true, type: 'date' })
+  completed_at: Date;
+
+  @Column({ nullable: true, type: 'date' })
+  canceled_at: Date;
+
+  @Column({ nullable: true, type: 'text' })
+  cancel_reason: string;
+
+  @OneToMany(() => OrderPictures, (pictures) => pictures.order)
+  pictures: OrderPictures[];
 }

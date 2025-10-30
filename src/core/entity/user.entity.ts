@@ -1,42 +1,53 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
-import { RoleUser } from 'src/common/enum';
-import { Orders } from './orders.entity';
-import { MasterService } from './master-service.entity';
+import { UserLang } from 'src/common/enum';
+import { MasterProfile } from './master-profile.entity';
 import { Notifications } from './notifications.entity';
+import { Orders } from './orders.entity';
+import { UserOpinions } from './user-opinions.entity';
+import { PaymentMethods } from './payment-methods.entity';
+import { ChatRooms } from './chat-rooms.entity';
+import { ChatParticipants } from './chat-participants.entity';
+import { Messages } from './messages.entity';
 
 @Entity()
 export class User extends BaseEntity {
   @Column({ nullable: true })
-  full_name: string;
+  first_name: string;
+
+  @Column({ nullable: true })
+  last_name: string;
 
   @Column({ nullable: false, unique: true })
   email: string;
 
-  @Column({ type: 'enum', enum: RoleUser, default: RoleUser.USER })
-  role: RoleUser;
-
   @Column({ nullable: true })
   avatar_url: string;
 
-  @Column({ nullable: true })
-  bio: string;
+  @Column({ nullable: false, type: 'enum', enum: UserLang })
+  language: UserLang;
 
-  @Column({ type: 'float', default: 5 })
-  rating_avg: number;
-
-  @Column({ default: false })
-  is_verified: boolean;
-
-  @OneToMany(() => Orders, (orders) => orders.client)
-  userOrders: Orders[];
-
-  @OneToMany(() => Orders, (orders) => orders.master)
-  masterOrders: Orders[];
-
-  @OneToMany(() => MasterService, (masterService) => masterService.master)
-  masterServices: MasterService[];
+  @OneToOne(() => MasterProfile, (master) => master.user)
+  master_profile: MasterProfile;
 
   @OneToMany(() => Notifications, (notifications) => notifications.user)
   notifications: Notifications[];
+
+  @OneToMany(() => Orders, (order) => order.user)
+  orders: Orders[];
+
+  @OneToMany(() => UserOpinions, (opinions) => opinions.user)
+  opinions: UserOpinions[];
+
+  @OneToMany(() => PaymentMethods, (payments) => payments.user)
+  payment_methods: PaymentMethods[];
+
+  @OneToMany(() => ChatRooms, (chats) => chats.user)
+  chats: ChatRooms[];
+
+  @OneToMany(() => ChatParticipants, (chP) => chP.user)
+  chat_participants: ChatParticipants[];
+
+  @OneToMany(() => Messages, (messages) => messages.user)
+  messages: Messages[];
 }
