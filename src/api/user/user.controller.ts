@@ -3,19 +3,19 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
   UseGuards,
   Query,
+  Param,
+  Patch,
+  Delete,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { AdminGuard } from 'src/common/guard/admin.guard';
-import { SelfGuard } from 'src/common/guard/self.guard';
 import { IQueryParams } from 'src/common/interface';
+import { SelfGuard } from 'src/common/guard/self.guard';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @UseGuards(JwtGuard)
 @Controller('user')
@@ -34,7 +34,11 @@ export class UserController {
     const page = query.page ?? 1;
     const take = query.limit ?? 10;
     const skip = (page - 1) * take;
-    return this.userService.findAll({ skip, take });
+    return this.userService.findAll({
+      skip,
+      take,
+      relations: ['master_profile'],
+    });
   }
 
   @UseGuards(SelfGuard)

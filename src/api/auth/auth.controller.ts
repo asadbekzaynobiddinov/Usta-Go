@@ -2,7 +2,7 @@ import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 // import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { IGoogleProfile } from 'src/infrastructure/lib/prompts/types';
+import { IGoogleProfile } from 'src/common/interface';
 
 @Controller('auth')
 export class AuthController {

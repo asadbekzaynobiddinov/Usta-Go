@@ -36,3 +36,15 @@ export interface IQueryParams {
   fromDate?: string;
   toDate?: string;
 }
+
+export interface IFindOptions<T = any> {
+  skip?: number;
+  take?: number;
+  search?: string;
+  where?: Partial<T>;
+  orderBy?: {
+    [P in keyof T]?: 'ASC' | 'DESC';
+  };
+  select?: (keyof T)[];
+  relations?: string[];
+}

@@ -8,7 +8,7 @@ import { MailService } from './mail.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 // import { IPayload } from 'src/infrastructure/lib/prompts/types';
 import { JwtService } from '@nestjs/jwt';
-import { IGoogleProfile, IPayload } from 'src/infrastructure/lib/prompts/types';
+import { IGoogleProfile, IPayload } from 'src/common/interface';
 import { config } from 'src/config';
 
 @Injectable()

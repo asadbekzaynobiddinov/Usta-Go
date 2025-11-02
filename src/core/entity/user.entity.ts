@@ -24,7 +24,12 @@ export class User extends BaseEntity {
   @Column({ nullable: true })
   avatar_url: string;
 
-  @Column({ nullable: false, type: 'enum', enum: UserLang })
+  @Column({
+    nullable: false,
+    type: 'enum',
+    enum: UserLang,
+    default: UserLang.RU,
+  })
   language: UserLang;
 
   @OneToOne(() => MasterProfile, (master) => master.user)
