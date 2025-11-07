@@ -7,14 +7,16 @@ import { CreateMasterProfileDto } from './dto/create-master-profile.dto';
 import { MasterProfile, MasterProfileRepository } from 'src/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MasterStatus } from 'src/common/enum';
-import { IFindOptions } from 'src/common/interface';
+import { IFindOptions, IPayload } from 'src/common/interface';
 import { UpdateMasterProfileDto } from './dto/update-master-profile.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class MasterProfileService {
   constructor(
     @InjectRepository(MasterProfile)
     private readonly repository: MasterProfileRepository,
+    private readonly jwt: JwtService,
   ) {}
   async create(dto: CreateMasterProfileDto) {
     const profileExists = await this.repository.findOne({
@@ -79,6 +81,27 @@ export class MasterProfileService {
     return {
       status_code: 204,
       message: 'Profile deleted succsessfuly',
+    };
+  }
+
+  async getToken(id: string) {
+    const masterProfile = await this.repository.findOne({
+      where: { user: { id } },
+    });
+    if (!masterProfile) {
+      throw new NotFoundException('Master Profile not found');
+    }
+    const payload: IPayload = {
+      sub: masterProfile.id,
+      interfaceTo: 'master',
+    };
+    const token = this.jwt.sign(payload, {
+      expiresIn: '30d',
+    });
+    return {
+      status_code: 200,
+      message: 'Login as master was successful',
+      data: { token },
     };
   }
 }

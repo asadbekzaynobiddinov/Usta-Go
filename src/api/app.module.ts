@@ -8,6 +8,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { MasterProfileModule } from './master-profile/master-profile.module';
 import { UserModule } from './user/user.module';
 import { AdminModule } from './admin/admin.module';
+import { MasterServicesModule } from './master-services/master-services.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AdminModule } from './admin/admin.module';
     UserModule,
     MasterProfileModule,
     AdminModule,
+    MasterServicesModule,
   ],
   providers: [
     {

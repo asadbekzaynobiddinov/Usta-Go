@@ -1,0 +1,72 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CreateMasterServiceDto } from './dto/create-master-service.dto';
+import { UpdateMasterServiceDto } from './dto/update-master-service.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { MasterServicesRepository, MasterServices } from 'src/core';
+
+@Injectable()
+export class MasterServicesService {
+  constructor(
+    @InjectRepository(MasterServices)
+    private readonly repository: MasterServicesRepository,
+  ) {}
+  async create(dto: CreateMasterServiceDto) {
+    const newService = this.repository.create({
+      master: { id: dto.master_id },
+      ...dto,
+    });
+    await this.repository.save(newService);
+    return {
+      status_code: 201,
+      message: 'Master service created succsessfuly',
+      data: newService,
+    };
+  }
+
+  async findAll(masterId: string) {
+    const services = await this.repository.find({
+      where: { master: { id: masterId } },
+    });
+    return {
+      status_code: 200,
+      message: 'Master services fetched succsessfuly',
+      data: services,
+    };
+  }
+
+  async findOne(id: string) {
+    const service = await this.repository.findOneBy({ id });
+    if (!service) {
+      throw new NotFoundException('Master service not found');
+    }
+    return {
+      status_code: 200,
+      message: 'Master service fetched succsessfuly',
+      data: service,
+    };
+  }
+
+  async update(id: string, dto: UpdateMasterServiceDto) {
+    await this.findOne(id);
+    await this.repository.update({ id }, { ...dto });
+    return {
+      status_code: 200,
+      message: 'Master service updated succsessfuly',
+      data: (await this.findOne(id)).data,
+    };
+  }
+
+  async remove(id: string) {
+    await this.findOne(id);
+    try {
+      await this.repository.delete({ id });
+    } catch (error) {
+      console.log(error);
+    }
+    return {
+      status_code: 200,
+      message: 'Master service deleted succsessfuly',
+      data: {},
+    };
+  }
+}

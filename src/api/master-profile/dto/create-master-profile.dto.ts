@@ -17,6 +17,7 @@ export class CreateMasterProfileDto {
   @IsOptional()
   user_id?: string;
 
+  @IsOptional()
   @IsEnum(MasterStatus)
   status?: MasterStatus;
 }

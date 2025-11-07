@@ -19,6 +19,11 @@ import { UpdateMasterProfileDto } from './dto/update-master-profile.dto';
 export class MasterProfileController {
   constructor(private readonly masterProfileService: MasterProfileService) {}
 
+  @Get('get-token')
+  getToken(@UserID() id: string) {
+    return this.masterProfileService.getToken(id);
+  }
+
   @Post()
   create(
     @Body() createMasterProfileDto: CreateMasterProfileDto,
@@ -32,7 +37,7 @@ export class MasterProfileController {
 
   @Get()
   findAll() {
-    return this.masterProfileService.findAll({ relations: ['user'] });
+    return this.masterProfileService.findAll({ relations: ['services'] });
   }
 
   @Get(':id')

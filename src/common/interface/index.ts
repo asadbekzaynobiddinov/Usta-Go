@@ -1,6 +1,6 @@
 export interface IPayload {
   sub: string;
-  email: string;
+  email?: string;
   interfaceTo?: string;
   role?: string;
   iat?: number;
