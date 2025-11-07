@@ -11,6 +11,7 @@ import { AdminModule } from './admin/admin.module';
 import { MasterServicesModule } from './master-services/master-services.module';
 import { PayoutAccountsModule } from './payout-accounts/payout-accounts.module';
 import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
+import { OrdersModule } from './orders/orders.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
     MasterServicesModule,
     PayoutAccountsModule,
     PaymentMethodsModule,
+    OrdersModule,
   ],
   providers: [
     {

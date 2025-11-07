@@ -4,7 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User, UserRepository } from 'src/core';
+import {
+  Notifications,
+  NotificationsRepository,
+  User,
+  UserRepository,
+} from 'src/core';
 import { CreateUserDto } from './dto/create-user.dto';
 import { IFindOptions } from 'src/common/interface';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -13,6 +18,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UserService {
   constructor(
     @InjectRepository(User) private readonly repository: UserRepository,
+    @InjectRepository(Notifications)
+    private readonly notificationsRepository: NotificationsRepository,
   ) {}
   async create(dto: CreateUserDto) {
     const userExists = await this.repository.findOne({
