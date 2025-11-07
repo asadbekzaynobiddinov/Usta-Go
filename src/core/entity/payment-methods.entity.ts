@@ -5,13 +5,13 @@ import { User } from './user.entity';
 @Entity()
 export class PaymentMethods extends BaseEntity {
   @Column({ nullable: false })
-  masked_umber: string;
+  masked_number: string;
 
   @Column({ nullable: false, type: 'text' })
   token: string;
 
   @Column({ nullable: false })
-  epire_month: number;
+  expire_month: number;
 
   @Column({ nullable: false })
   expire_year: number;

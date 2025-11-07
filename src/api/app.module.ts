@@ -10,6 +10,7 @@ import { UserModule } from './user/user.module';
 import { AdminModule } from './admin/admin.module';
 import { MasterServicesModule } from './master-services/master-services.module';
 import { PayoutAccountsModule } from './payout-accounts/payout-accounts.module';
+import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 
 @Module({
   imports: [
@@ -29,9 +30,9 @@ import { PayoutAccountsModule } from './payout-accounts/payout-accounts.module';
     AuthModule,
     UserModule,
     MasterProfileModule,
-    AdminModule,
     MasterServicesModule,
     PayoutAccountsModule,
+    PaymentMethodsModule,
   ],
   providers: [
     {

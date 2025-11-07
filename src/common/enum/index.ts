@@ -91,3 +91,10 @@ export enum FileType {
   LOCATION = 'location',
   OTHER = 'other',
 }
+
+export enum PaymentProvider {
+  VISA = 'visa',
+  MASTERCARD = 'mastercard',
+  PAYME = 'payme',
+  CLICK = 'click',
+}
