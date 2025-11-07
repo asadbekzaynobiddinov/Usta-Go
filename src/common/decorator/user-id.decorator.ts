@@ -22,7 +22,7 @@ export const UserID = createParamDecorator(
     try {
       const jwtService = new JwtService({ secret: config.ACCESS_TOKEN_KEY });
       const decoded = await jwtService.verifyAsync(token);
-      return decoded['id'];
+      return decoded['sub'];
     } catch (error) {
       throw new BadRequestException('Invalid token');
     }

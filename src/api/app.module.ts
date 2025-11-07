@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { MasterProfileModule } from './master-profile/master-profile.module';
 import { UserModule } from './user/user.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -22,9 +23,11 @@ import { UserModule } from './user/user.module';
     CacheModule.register({
       ttl: 60,
     }),
+    AdminModule,
     AuthModule,
     UserModule,
     MasterProfileModule,
+    AdminModule,
   ],
   providers: [
     {

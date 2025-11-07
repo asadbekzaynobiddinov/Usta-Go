@@ -1,5 +1,5 @@
 import { IsString, IsEnum, IsUrl, IsOptional } from 'class-validator';
-import { MasterGender } from 'src/common/enum';
+import { MasterGender, MasterStatus } from 'src/common/enum';
 
 export class CreateMasterProfileDto {
   @IsEnum(MasterGender, { message: 'Gender shoud be "male" or "female"' })
@@ -16,4 +16,7 @@ export class CreateMasterProfileDto {
 
   @IsOptional()
   user_id?: string;
+
+  @IsEnum(MasterStatus)
+  status?: MasterStatus;
 }

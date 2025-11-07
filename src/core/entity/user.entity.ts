@@ -1,4 +1,4 @@
-import { Entity, Column, OneToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Entity, Column, OneToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
 import { UserLang } from 'src/common/enum';
 import { MasterProfile } from './master-profile.entity';
@@ -33,7 +33,6 @@ export class User extends BaseEntity {
   language: UserLang;
 
   @OneToOne(() => MasterProfile, (master) => master.user)
-  @JoinColumn()
   master_profile: MasterProfile;
 
   @OneToMany(() => Notifications, (notifications) => notifications.user)

@@ -1,4 +1,4 @@
-import { Entity, Column, OneToOne, OneToMany } from 'typeorm';
+import { Entity, Column, OneToOne, OneToMany, JoinColumn } from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
 import { User } from './user.entity';
 import { MasterGender, MasterStatus } from 'src/common/enum';
@@ -11,6 +11,7 @@ import { UserOpinions } from './user-opinions.entity';
 @Entity()
 export class MasterProfile extends BaseEntity {
   @OneToOne(() => User, (user) => user.master_profile, { onDelete: 'CASCADE' })
+  @JoinColumn()
   user: User;
 
   @Column({ nullable: true, type: 'text' })
