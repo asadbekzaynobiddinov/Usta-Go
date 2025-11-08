@@ -22,7 +22,12 @@ export class PayoutAccounts extends BaseEntity {
   @Column({ nullable: false })
   holder_name: string;
 
-  @Column({ nullable: false, type: 'enum', enum: PayoutAccountsEnum })
+  @Column({
+    nullable: false,
+    type: 'enum',
+    enum: PayoutAccountsEnum,
+    default: PayoutAccountsEnum.PENDING,
+  })
   status: PayoutAccountsEnum;
 
   @Column({ nullable: false, type: 'boolean', default: false })

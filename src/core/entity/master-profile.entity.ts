@@ -7,6 +7,7 @@ import { PayoutAccounts } from './payout-accounts.entity';
 import { Notifications } from './notifications.entity';
 import { Orders } from './orders.entity';
 import { UserOpinions } from './user-opinions.entity';
+import { OrderOffers } from './order-offers.entity';
 
 @Entity()
 export class MasterProfile extends BaseEntity {
@@ -56,7 +57,12 @@ export class MasterProfile extends BaseEntity {
     accuracy: number;
   };
 
-  @Column({ nullable: false, type: 'enum', enum: MasterStatus })
+  @Column({
+    nullable: false,
+    type: 'enum',
+    enum: MasterStatus,
+    default: MasterStatus.PENDING,
+  })
   status: MasterStatus;
 
   @OneToMany(() => MasterServices, (serv) => serv.master)
@@ -73,4 +79,7 @@ export class MasterProfile extends BaseEntity {
 
   @OneToMany(() => UserOpinions, (opinions) => opinions.master)
   user_opinions: UserOpinions[];
+
+  @OneToMany(() => OrderOffers, (offers) => offers.master)
+  offers: OrderOffers[];
 }

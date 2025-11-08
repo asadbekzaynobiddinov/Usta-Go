@@ -1,6 +1,7 @@
 import { Entity, Column, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
 import { OrderStatus } from 'src/common/enum';
+import { OrderOffers } from './order-offers.entity';
 import { User } from './user.entity';
 import { MasterProfile } from './master-profile.entity';
 import { OrderPictures } from './order-pictures.entity';
@@ -52,4 +53,7 @@ export class Orders extends BaseEntity {
 
   @OneToMany(() => OrderPictures, (pictures) => pictures.order)
   pictures: OrderPictures[];
+
+  @OneToMany(() => OrderOffers, (offers) => offers.order)
+  offers: OrderOffers[];
 }
