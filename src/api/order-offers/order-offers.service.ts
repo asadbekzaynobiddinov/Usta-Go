@@ -14,6 +14,7 @@ export class OrderOffersService {
     const newOffer = this.repository.create({
       ...dto,
       master: { id: dto.masterId },
+      order: { id: dto.orderId },
     });
     await this.repository.save(newOffer);
     return {

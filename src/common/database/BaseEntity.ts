@@ -7,15 +7,15 @@ export class BaseEntity {
 
   @Column({
     name: 'created_at',
-    type: 'bigint',
-    default: Date.now(),
+    type: 'date',
+    default: new Date(Date.now()),
   })
   created_at: number;
 
   @Column({
     name: 'updated_at',
-    type: 'bigint',
-    default: Date.now(),
+    type: 'date',
+    default: new Date(Date.now()),
   })
   updated_at: number;
 }
