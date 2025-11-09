@@ -13,6 +13,7 @@ import { PayoutAccountsModule } from './payout-accounts/payout-accounts.module';
 import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 import { OrdersModule } from './orders/orders.module';
 import { OrderOffersModule } from './order-offers/order-offers.module';
+import { UserOpinionsModule } from './user-opinions/user-opinions.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { OrderOffersModule } from './order-offers/order-offers.module';
     PaymentMethodsModule,
     OrdersModule,
     OrderOffersModule,
+    UserOpinionsModule,
   ],
   providers: [
     {

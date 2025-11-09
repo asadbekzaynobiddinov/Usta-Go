@@ -1,10 +1,11 @@
-import { Entity, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
 import { OrderStatus } from 'src/common/enum';
 import { OrderOffers } from './order-offers.entity';
 import { User } from './user.entity';
 import { MasterProfile } from './master-profile.entity';
 import { OrderPictures } from './order-pictures.entity';
+import { UserOpinions } from './user-opinions.entity';
 
 @Entity()
 export class Orders extends BaseEntity {
@@ -13,6 +14,9 @@ export class Orders extends BaseEntity {
 
   @ManyToOne(() => MasterProfile, (master) => master.orders)
   master: MasterProfile;
+
+  @OneToOne(() => UserOpinions, (op) => op.order)
+  user_opinion: UserOpinions;
 
   @Column({ nullable: false })
   title: string;
