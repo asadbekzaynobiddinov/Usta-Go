@@ -45,6 +45,9 @@ export class MasterProfile extends BaseEntity {
   @Column({ nullable: false, type: 'float', default: 5.0 })
   rating_avg: number;
 
+  @Column({ type: 'int', default: 0 })
+  rating_count: number;
+
   @Column({ type: 'jsonb', nullable: true })
   address: {
     country: string;

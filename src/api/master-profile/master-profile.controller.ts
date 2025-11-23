@@ -13,6 +13,7 @@ import { CreateMasterProfileDto } from './dto/create-master-profile.dto';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { UserID } from 'src/common/decorator/user-id.decorator';
 import { UpdateMasterProfileDto } from './dto/update-master-profile.dto';
+import { SelfGuard } from 'src/common/guard/self.guard';
 
 @UseGuards(JwtGuard)
 @Controller('master-profile')
@@ -45,6 +46,7 @@ export class MasterProfileController {
     return this.masterProfileService.findOneById(id);
   }
 
+  @UseGuards(SelfGuard)
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -53,6 +55,7 @@ export class MasterProfileController {
     return this.masterProfileService.update(id, updateMasterProfileDto);
   }
 
+  @UseGuards(SelfGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.masterProfileService.delete(id);

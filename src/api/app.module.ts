@@ -14,6 +14,7 @@ import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 import { OrdersModule } from './orders/orders.module';
 import { OrderOffersModule } from './order-offers/order-offers.module';
 import { UserOpinionsModule } from './user-opinions/user-opinions.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { UserOpinionsModule } from './user-opinions/user-opinions.module';
     OrdersModule,
     OrderOffersModule,
     UserOpinionsModule,
+    ChatModule,
   ],
   providers: [
     {
