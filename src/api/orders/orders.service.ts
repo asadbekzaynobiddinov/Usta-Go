@@ -12,7 +12,7 @@ export class OrdersService {
   ) {}
   async create(dto: CreateOrderDto) {
     const newOrder = this.repository.create({
-      user: { id: dto.userId },
+      user: { id: dto.user_id },
       ...dto,
     });
     await this.repository.save(newOrder);

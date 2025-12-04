@@ -8,13 +8,13 @@ import {
 
 export class CreateUserOpinionDto {
   @IsOptional()
-  userId?: string;
+  user_id?: string;
 
   @IsUUID()
-  masterId: string;
+  master_id: string;
 
   @IsUUID()
-  orderId: string;
+  order_id: string;
 
   @IsString()
   coment: string;

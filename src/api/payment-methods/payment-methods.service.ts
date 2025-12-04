@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { FindOneOptions } from 'typeorm';
 import { CreatePaymentMethodDto } from './dto/create-payment-method.dto';
 import { UpdatePaymentMethodDto } from './dto/update-payment-method.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -36,8 +37,11 @@ export class PaymentMethodsService {
     };
   }
 
-  async findOne(id: string) {
-    const paymentMethod = await this.repository.findOneBy({ id });
+  async findOne(id: string, options?: FindOneOptions<PaymentMethods>) {
+    const paymentMethod = await this.repository.findOne({
+      where: { id },
+      ...options,
+    });
     if (!paymentMethod) {
       throw new NotFoundException('Payment method not found');
     }

@@ -1,22 +1,24 @@
-import { Injectable, Inject } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cache } from 'cache-manager';
 import { User, UserRepository } from 'src/core';
 import { MailService } from './mail.service';
 // import { generateOTP } from 'src/infrastructure/lib/otp-generator/generateOTP';
 // import { BcryptEncryption } from 'src/infrastructure/lib/bcrypt';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 // import { IPayload } from 'src/infrastructure/lib/prompts/types';
 import { JwtService } from '@nestjs/jwt';
 import { IGoogleProfile, IPayload } from 'src/common/interface';
 import { config } from 'src/config';
+import { infobipClient } from 'src/infrastructure/lib/sms-service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly mail: MailService,
     @InjectRepository(User) private readonly userRepository: UserRepository,
-    @Inject(CACHE_MANAGER) private readonly cache: Cache,
     private jwt: JwtService,
   ) {}
   // async register(dto: RegisterDto) {
@@ -140,6 +142,32 @@ export class AuthService {
   //   };
   // }
 
+  async sendOtp(phoneNumber: string) {
+    const otpCode = Math.floor(100000 + Math.random() * 900000);
+
+    const message = `Your OTP code is: ${otpCode}`;
+    try {
+      const response = await infobipClient.channels.whatsapp.send({
+        from: '+44 7491 163443',
+        to: phoneNumber,
+        type: 'text',
+        content: {
+          text: message,
+        },
+      });
+      console.log(console.log(response));
+    } catch (error) {
+      console.log(error);
+    }
+    return {
+      status_code: 200,
+      message: `OTP sent to ${phoneNumber}`,
+      data: {
+        otp: otpCode,
+      },
+    };
+  }
+
   async googleAuth(googleProfile: IGoogleProfile) {
     const user = await this.userRepository.findOne({
       where: { email: googleProfile.emails[0].value },
@@ -155,6 +183,7 @@ export class AuthService {
         await this.userRepository.save(newUser);
         const payload: IPayload = {
           sub: newUser.id,
+          interfaceTo: 'user',
           email: newUser.email,
         };
         const token = this.jwt.sign(payload, {

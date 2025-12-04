@@ -36,8 +36,10 @@ export class PaymentMethodsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.paymentMethodsService.findOne(id);
+  findOne(@Param('id') id: string, @UserID() userId: string) {
+    return this.paymentMethodsService.findOne(id, {
+      where: { user: { id: userId } },
+    });
   }
 
   @Patch(':id')

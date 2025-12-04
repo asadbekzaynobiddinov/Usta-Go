@@ -65,5 +65,5 @@ export class CreateOrderDto {
   scheduled_at?: Date;
 
   @IsOptional()
-  userId: string;
+  user_id: string;
 }

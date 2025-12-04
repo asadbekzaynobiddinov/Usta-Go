@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
 // import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -22,6 +22,11 @@ export class AuthController {
   // login(@Body() user: { email: string; password: string }) {
   //   return this.authService.login(user.email, user.password);
   // }
+
+  @Post('send-otp')
+  async sendOtp(@Body() data: { phoneNumber: string }) {
+    return this.authService.sendOtp(data.phoneNumber);
+  }
 
   @Get('google')
   @UseGuards(AuthGuard('google'))

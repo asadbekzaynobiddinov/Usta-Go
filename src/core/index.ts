@@ -1,5 +1,4 @@
 export * from './entity/admin.entity';
-export * from './entity/chat-participants.entity';
 export * from './entity/chat-rooms.entity';
 export * from './entity/master-profile.entity';
 export * from './entity/master-services.entity';
@@ -16,7 +15,6 @@ export * from './entity/user-opinions.entity';
 export * from './entity/user.entity';
 
 export * from './repository/admin.repository';
-export * from './repository/chat-participants.repository';
 export * from './repository/chat-rooms.repository';
 export * from './repository/master-profile.repository';
 export * from './repository/master-services.repository';

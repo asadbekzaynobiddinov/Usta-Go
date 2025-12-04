@@ -12,5 +12,5 @@ export class CreateOrderOfferDto {
   message?: string;
 
   @IsOptional()
-  masterId?: string;
+  master_id?: string;
 }

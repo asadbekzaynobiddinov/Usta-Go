@@ -7,7 +7,6 @@ import { Orders } from './orders.entity';
 import { UserOpinions } from './user-opinions.entity';
 import { PaymentMethods } from './payment-methods.entity';
 import { ChatRooms } from './chat-rooms.entity';
-import { ChatParticipants } from './chat-participants.entity';
 import { Messages } from './messages.entity';
 
 @Entity()
@@ -49,9 +48,6 @@ export class User extends BaseEntity {
 
   @OneToMany(() => ChatRooms, (chats) => chats.user)
   chats: ChatRooms[];
-
-  @OneToMany(() => ChatParticipants, (chP) => chP.user)
-  chat_participants: ChatParticipants[];
 
   @OneToMany(() => Messages, (messages) => messages.user)
   messages: Messages[];

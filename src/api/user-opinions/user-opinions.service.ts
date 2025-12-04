@@ -12,9 +12,9 @@ export class UserOpinionsService {
   ) {}
   async create(dto: CreateUserOpinionDto) {
     const newOpinion = this.repository.create({
-      user: { id: dto.userId },
-      master: { id: dto.masterId },
-      order: { id: dto.orderId },
+      user: { id: dto.user_id },
+      master: { id: dto.master_id },
+      order: { id: dto.order_id },
       ...dto,
       pictures: [],
     });

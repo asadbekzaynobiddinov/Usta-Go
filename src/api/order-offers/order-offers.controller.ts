@@ -26,7 +26,7 @@ export class OrderOffersController {
   ) {
     return this.orderOffersService.create({
       ...createOrderOfferDto,
-      masterId: id,
+      master_id: id,
     });
   }
 

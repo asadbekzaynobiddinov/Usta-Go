@@ -2,11 +2,17 @@ import { Entity, ManyToOne, OneToMany, OneToOne } from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
 import { User } from './user.entity';
 import { Messages } from './messages.entity';
+import { MasterProfile } from './master-profile.entity';
 
 @Entity()
 export class ChatRooms extends BaseEntity {
   @ManyToOne(() => User, (user) => user.chats, { onDelete: 'SET NULL' })
   user: User;
+
+  @ManyToOne(() => MasterProfile, (master) => master.chats, {
+    onDelete: 'SET NULL',
+  })
+  master: MasterProfile;
 
   @OneToMany(() => Messages, (messages) => messages.chat_room)
   messages: Messages[];

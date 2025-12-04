@@ -21,7 +21,7 @@ export class OrdersController {
 
   @Post()
   create(@Body() createOrderDto: CreateOrderDto, @UserID() id: string) {
-    return this.ordersService.create({ ...createOrderDto, userId: id });
+    return this.ordersService.create({ ...createOrderDto, user_id: id });
   }
 
   @Get()

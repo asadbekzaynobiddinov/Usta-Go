@@ -15,6 +15,10 @@ export type ConfigType = {
   CLIENT_SECRET: string;
   SUPER_ADMIN_EMAIL: string;
   SUPER_ADMIN_PASSWORD: string;
+  REDIS_HOST: string;
+  REDIS_PORT: number;
+  INFOBIP_API: string;
+  INFOBIP_URL: string;
 };
 
 export const config: ConfigType = {
@@ -30,4 +34,8 @@ export const config: ConfigType = {
   CLIENT_SECRET: process.env.CLIENT_SECRET as string,
   SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL as string,
   SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD as string,
+  REDIS_HOST: process.env.REDIS_HOST as string,
+  REDIS_PORT: parseInt(process.env.REDIS_PORT as string, 10),
+  INFOBIP_API: process.env.INFOBIP_API as string,
+  INFOBIP_URL: process.env.INFOBIP_URL as string,
 };

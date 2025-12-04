@@ -7,7 +7,6 @@ import { User } from 'src/core/entity/user.entity';
 import { BcryptEncryption } from 'src/infrastructure/lib/bcrypt';
 import { GoogleStrategy } from 'src/common/strategies/google.strategy';
 import { PassportModule } from '@nestjs/passport';
-import { CacheModule } from '@nestjs/cache-manager';
 import { JwtModule } from '@nestjs/jwt';
 import { config } from 'src/config';
 
@@ -15,7 +14,6 @@ import { config } from 'src/config';
   imports: [
     PassportModule.register({ defaultStrategy: 'google' }),
     TypeOrmModule.forFeature([User]),
-    CacheModule.register(),
     JwtModule.register({ secret: config.ACCESS_TOKEN_KEY }),
   ],
   controllers: [AuthController],

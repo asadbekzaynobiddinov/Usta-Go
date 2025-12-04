@@ -13,7 +13,7 @@ export class OrderOffersService {
   async create(dto: CreateOrderOfferDto) {
     const newOffer = this.repository.create({
       ...dto,
-      master: { id: dto.masterId },
+      master: { id: dto.master_id },
       order: { id: dto.orderId },
     });
     await this.repository.save(newOffer);

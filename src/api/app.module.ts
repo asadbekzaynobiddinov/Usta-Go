@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-import { CacheInterceptor, CacheModule } from '@nestjs/cache-manager';
 import { config } from 'src/config';
 import { AuthModule } from './auth/auth.module';
-import { APP_INTERCEPTOR } from '@nestjs/core';
 import { MasterProfileModule } from './master-profile/master-profile.module';
 import { UserModule } from './user/user.module';
 import { AdminModule } from './admin/admin.module';
@@ -14,6 +12,8 @@ import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 import { OrdersModule } from './orders/orders.module';
 import { OrderOffersModule } from './order-offers/order-offers.module';
 import { UserOpinionsModule } from './user-opinions/user-opinions.module';
+import { MessageAttachmentsModule } from './message-attachments/message-attachments.module';
+import { MessagesModule } from './messages/messages.module';
 import { ChatModule } from './chat/chat.module';
 
 @Module({
@@ -27,9 +27,6 @@ import { ChatModule } from './chat/chat.module';
     JwtModule.register({
       secret: config.ACCESS_TOKEN_KEY,
     }),
-    CacheModule.register({
-      ttl: 60,
-    }),
     AdminModule,
     AuthModule,
     UserModule,
@@ -41,12 +38,8 @@ import { ChatModule } from './chat/chat.module';
     OrderOffersModule,
     UserOpinionsModule,
     ChatModule,
-  ],
-  providers: [
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor,
-    },
+    MessagesModule,
+    MessageAttachmentsModule,
   ],
 })
 export class AppModule {}

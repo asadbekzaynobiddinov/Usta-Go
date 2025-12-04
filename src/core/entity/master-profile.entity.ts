@@ -8,6 +8,7 @@ import { Notifications } from './notifications.entity';
 import { Orders } from './orders.entity';
 import { UserOpinions } from './user-opinions.entity';
 import { OrderOffers } from './order-offers.entity';
+import { ChatRooms } from './chat-rooms.entity';
 
 @Entity()
 export class MasterProfile extends BaseEntity {
@@ -85,4 +86,7 @@ export class MasterProfile extends BaseEntity {
 
   @OneToMany(() => OrderOffers, (offers) => offers.master)
   offers: OrderOffers[];
+
+  @OneToMany(() => ChatRooms, (chat) => chat.master)
+  chats: ChatRooms[];
 }
