@@ -1,4 +1,15 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateUserOpinionDto } from './create-user-opinion.dto';
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class UpdateUserOpinionDto extends PartialType(CreateUserOpinionDto) {}
+export class UpdateUserOpinionDto {
+  @IsOptional()
+  @IsString()
+  comment?: string;
+
+  @IsOptional()
+  @IsNumber()
+  rating?: number;
+
+  @IsOptional()
+  @IsArray()
+  pictures?: string[];
+}
