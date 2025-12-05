@@ -3,6 +3,7 @@ import { CreateMasterServiceDto } from './dto/create-master-service.dto';
 import { UpdateMasterServiceDto } from './dto/update-master-service.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MasterServicesRepository, MasterServices } from 'src/core';
+import { FindManyOptions, FindOneOptions } from 'typeorm';
 
 @Injectable()
 export class MasterServicesService {
@@ -23,10 +24,8 @@ export class MasterServicesService {
     };
   }
 
-  async findAll(masterId: string) {
-    const services = await this.repository.find({
-      where: { master: { id: masterId } },
-    });
+  async findAll(options?: FindManyOptions<MasterServices>) {
+    const services = await this.repository.find(options);
     return {
       status_code: 200,
       message: 'Master services fetched succsessfuly',
@@ -34,8 +33,8 @@ export class MasterServicesService {
     };
   }
 
-  async findOne(id: string) {
-    const service = await this.repository.findOneBy({ id });
+  async findOne(options: FindOneOptions<MasterServices>) {
+    const service = await this.repository.findOne(options);
     if (!service) {
       throw new NotFoundException('Master service not found');
     }
@@ -46,18 +45,18 @@ export class MasterServicesService {
     };
   }
 
-  async update(id: string, dto: UpdateMasterServiceDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateMasterServiceDto, userId: string) {
+    await this.findOne({ where: { id, master: { id: userId } } });
     await this.repository.update({ id }, { ...dto });
     return {
       status_code: 200,
       message: 'Master service updated succsessfuly',
-      data: (await this.findOne(id)).data,
+      data: (await this.findOne({ where: { id } })).data,
     };
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, userId: string) {
+    await this.findOne({ where: { id, master: { id: userId } } });
     try {
       await this.repository.delete({ id });
     } catch (error) {

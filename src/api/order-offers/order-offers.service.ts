@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { OrderOffers, OrderOffersRepository } from 'src/core';
 import { CreateOrderOfferDto } from './dto/create-order-offer.dto';
 import { UpdateOrderOfferDto } from './dto/update-order-offer.dto';
+import { FindManyOptions, FindOneOptions } from 'typeorm';
 
 @Injectable()
 export class OrderOffersService {
@@ -24,8 +25,8 @@ export class OrderOffersService {
     };
   }
 
-  async findAll() {
-    const offers = await this.repository.find();
+  async findAll(options?: FindManyOptions<OrderOffers>) {
+    const offers = await this.repository.find(options);
     return {
       status_code: 200,
       message: 'Offers fetched succsessfuly',
@@ -33,8 +34,8 @@ export class OrderOffersService {
     };
   }
 
-  async findOne(id: string) {
-    const offer = await this.repository.findOneBy({ id });
+  async findOne(options: FindOneOptions<OrderOffers>) {
+    const offer = await this.repository.findOne(options);
     if (!offer) {
       throw new NotFoundException('Offer not found');
     }
@@ -45,18 +46,18 @@ export class OrderOffersService {
     };
   }
 
-  async update(id: string, dto: UpdateOrderOfferDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdateOrderOfferDto, userId: string) {
+    await this.findOne({ where: { id, master: { id: userId } } });
     await this.repository.update({ id }, { ...dto });
     return {
       status_code: 200,
       message: 'Offer updated succsessfuly',
-      data: (await this.findOne(id)).data,
+      data: (await this.findOne({ where: { id } })).data,
     };
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, userId: string) {
+    await this.findOne({ where: { id, master: { id: userId } } });
     await this.repository.delete({ id });
     return {
       status_code: 200,

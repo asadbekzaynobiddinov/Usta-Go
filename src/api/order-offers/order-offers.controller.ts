@@ -7,12 +7,14 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { OrderOffersService } from './order-offers.service';
 import { CreateOrderOfferDto } from './dto/create-order-offer.dto';
 import { UpdateOrderOfferDto } from './dto/update-order-offer.dto';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { UserID } from 'src/common/decorator/user-id.decorator';
+import { UserROLE } from 'src/common/decorator/user-role.decorator';
 
 @UseGuards(JwtGuard)
 @Controller('order-offers')
@@ -31,25 +33,60 @@ export class OrderOffersController {
   }
 
   @Get()
-  findAll() {
-    return this.orderOffersService.findAll();
+  findAll(
+    @UserID() userId: string,
+    @UserROLE() role: string,
+    @Query()
+    query: {
+      page: number;
+      limit: number;
+      orderBy: string;
+      order: 'ASC' | 'DESC';
+    },
+  ) {
+    query.orderBy = 'created_at';
+    query.order = 'DESC';
+    const skip = (query.page - 1) * query.limit;
+    if (role === 'admin' || role === 'superadmin') {
+      return this.orderOffersService.findAll({
+        skip,
+        take: query.limit,
+        order: { [query.orderBy]: query.order },
+      });
+    }
+    return this.orderOffersService.findAll({
+      where: { master: { id: userId } },
+      skip,
+      take: query.limit,
+      order: { [query.orderBy]: query.order },
+    });
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.orderOffersService.findOne(id);
+  findOne(
+    @Param('id') id: string,
+    @UserID() userId: string,
+    @UserROLE() role: string,
+  ) {
+    if (role === 'admin' || role === 'superadmin') {
+      return this.orderOffersService.findOne({ where: { id } });
+    }
+    return this.orderOffersService.findOne({
+      where: { id, master: { id: userId } },
+    });
   }
 
   @Patch(':id')
   update(
     @Param('id') id: string,
     @Body() updateOrderOfferDto: UpdateOrderOfferDto,
+    @UserID() userId: string,
   ) {
-    return this.orderOffersService.update(id, updateOrderOfferDto);
+    return this.orderOffersService.update(id, updateOrderOfferDto, userId);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.orderOffersService.remove(id);
+  remove(@Param('id') id: string, @UserID() userId: string) {
+    return this.orderOffersService.remove(id, userId);
   }
 }
