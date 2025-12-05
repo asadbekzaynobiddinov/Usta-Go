@@ -94,6 +94,7 @@ export class MasterProfileService {
     const payload: IPayload = {
       sub: masterProfile.id,
       interfaceTo: 'master',
+      role: 'master',
     };
     const token = this.jwt.sign(payload, {
       expiresIn: '30d',

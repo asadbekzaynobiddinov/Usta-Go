@@ -184,7 +184,7 @@ export class AuthService {
         const payload: IPayload = {
           sub: newUser.id,
           interfaceTo: 'user',
-          email: newUser.email,
+          role: 'user',
         };
         const token = this.jwt.sign(payload, {
           secret: config.ACCESS_TOKEN_KEY,
