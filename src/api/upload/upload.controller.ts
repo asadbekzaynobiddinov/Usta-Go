@@ -4,11 +4,14 @@ import {
   UploadedFiles,
   UseInterceptors,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage, File } from 'multer';
 import { extname } from 'path';
+import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 
+@UseGuards(JwtGuard)
 @Controller('upload')
 export class UploadController {
   @Post()
