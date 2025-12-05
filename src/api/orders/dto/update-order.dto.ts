@@ -5,6 +5,7 @@ import {
   ValidateNested,
   IsDateString,
   IsObject,
+  IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { OrderStatus } from 'src/common/enum';
@@ -82,4 +83,8 @@ export class UpdateOrderDto {
   @IsOptional()
   @IsString()
   cancel_reason?: string;
+
+  @IsOptional()
+  @IsArray()
+  pictures?: { id: string; picture_url: string }[];
 }

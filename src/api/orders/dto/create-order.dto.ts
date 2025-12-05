@@ -2,13 +2,11 @@ import {
   IsString,
   IsNotEmpty,
   IsOptional,
-  IsEnum,
   ValidateNested,
-  IsDateString,
   IsObject,
+  IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { OrderStatus } from 'src/common/enum';
 
 class CoordinatesDto {
   @IsNotEmpty()
@@ -47,13 +45,8 @@ export class CreateOrderDto {
   @IsNotEmpty()
   title: string;
 
-  @IsOptional()
   @IsString()
-  description?: string;
-
-  @IsEnum(OrderStatus)
-  @IsOptional()
-  status?: OrderStatus;
+  description: string;
 
   @ValidateNested()
   @Type(() => AddressDto)
@@ -61,9 +54,9 @@ export class CreateOrderDto {
   address: AddressDto;
 
   @IsOptional()
-  @IsDateString()
-  scheduled_at?: Date;
-
-  @IsOptional()
   user_id: string;
+
+  @IsArray()
+  @IsOptional()
+  pictures: string[];
 }
