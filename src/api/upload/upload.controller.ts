@@ -6,7 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { diskStorage, File } from 'multer';
 import { extname } from 'path';
 
 @Controller('upload')
@@ -39,7 +39,7 @@ export class UploadController {
       },
     }),
   )
-  uploadFiles(@UploadedFiles() files: Express.Multer.File[]) {
+  uploadFiles(@UploadedFiles() files: File[]) {
     try {
       const data = files.map((file) => ({
         originalname: file.originalname,

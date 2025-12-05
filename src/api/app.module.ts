@@ -15,6 +15,7 @@ import { UserOpinionsModule } from './user-opinions/user-opinions.module';
 import { MessageAttachmentsModule } from './message-attachments/message-attachments.module';
 import { MessagesModule } from './messages/messages.module';
 import { ChatModule } from './chat/chat.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ChatModule } from './chat/chat.module';
     ChatModule,
     MessagesModule,
     MessageAttachmentsModule,
+    UploadModule,
   ],
 })
 export class AppModule {}

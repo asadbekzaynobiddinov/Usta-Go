@@ -47,7 +47,7 @@ export class UserOpinionsController {
     query.orderBy = 'created_at';
     query.order = 'DESC';
     const skip = (query.page - 1) * query.limit;
-    if (role === 'admin' || role === 'superAdmin') {
+    if (role === 'admin' || role === 'superadmin') {
       return this.userOpinionsService.findAll({
         skip,
         take: query.limit,
@@ -70,7 +70,7 @@ export class UserOpinionsController {
     @UserID() userId: string,
     @UserROLE() role: string,
   ) {
-    if (role === 'admin' || role === 'superAdmin') {
+    if (role === 'admin' || role === 'superadmin') {
       return this.userOpinionsService.findOne({ where: { id } });
     }
     return this.userOpinionsService.findOne({
