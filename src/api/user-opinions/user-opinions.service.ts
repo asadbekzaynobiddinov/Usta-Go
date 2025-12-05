@@ -4,7 +4,6 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserOpinionDto } from './dto/create-user-opinion.dto';
 import { UpdateUserOpinionDto } from './dto/update-user-opinion.dto';
@@ -94,12 +93,7 @@ export class UserOpinionsService {
   }
 
   async update(id: string, dto: UpdateUserOpinionDto, userId: string) {
-    const data = (await this.findOne({ where: { id } })).data;
-    if (data.user.id !== userId) {
-      throw new UnauthorizedException(
-        `You don't have access to update this opinion`,
-      );
-    }
+    await this.findOne({ where: { id, user: { id: userId } } });
     await this.repository.update({ id }, {});
     return {
       status_code: 200,
@@ -109,12 +103,7 @@ export class UserOpinionsService {
   }
 
   async remove(id: string, userId: string) {
-    const data = (await this.findOne({ where: { id } })).data;
-    if (data.user.id !== userId) {
-      throw new UnauthorizedException(
-        `You don't have access to delete this opinion`,
-      );
-    }
+    await this.findOne({ where: { id, user: { id: userId } } });
     await this.repository.delete({ id });
     return {
       status_code: 200,

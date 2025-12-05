@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { PaymentMethodsService } from './payment-methods.service';
 import { CreatePaymentMethodDto } from './dto/create-payment-method.dto';
@@ -31,13 +32,30 @@ export class PaymentMethodsController {
   }
 
   @Get()
-  findAll(@UserID() id: string) {
-    return this.paymentMethodsService.findAll(id);
+  findAll(
+    @UserID() id: string,
+    @Query()
+    query: {
+      page: number;
+      limit: number;
+      orderBy: string;
+      order: 'ASC' | 'DESC';
+    },
+  ) {
+    query.orderBy = 'created_at';
+    query.order = 'DESC';
+    const skip = (query.page - 1) * query.limit;
+    return this.paymentMethodsService.findAll({
+      where: { user: { id } },
+      skip,
+      take: query.limit,
+      order: { [query.orderBy]: query.order },
+    });
   }
 
   @Get(':id')
   findOne(@Param('id') id: string, @UserID() userId: string) {
-    return this.paymentMethodsService.findOne(id, {
+    return this.paymentMethodsService.findOne({
       where: { user: { id: userId } },
     });
   }
@@ -46,12 +64,17 @@ export class PaymentMethodsController {
   update(
     @Param('id') id: string,
     @Body() updatePaymentMethodDto: UpdatePaymentMethodDto,
+    @UserID() userId: string,
   ) {
-    return this.paymentMethodsService.update(id, updatePaymentMethodDto);
+    return this.paymentMethodsService.update(
+      id,
+      updatePaymentMethodDto,
+      userId,
+    );
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.paymentMethodsService.remove(id);
+  remove(@Param('id') id: string, @UserID() userId: string) {
+    return this.paymentMethodsService.remove(id, userId);
   }
 }

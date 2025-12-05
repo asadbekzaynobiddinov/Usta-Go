@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { FindOneOptions } from 'typeorm';
+import { FindManyOptions, FindOneOptions } from 'typeorm';
 import { CreatePaymentMethodDto } from './dto/create-payment-method.dto';
 import { UpdatePaymentMethodDto } from './dto/update-payment-method.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -26,10 +26,8 @@ export class PaymentMethodsService {
     };
   }
 
-  async findAll(userId: string) {
-    const paymentMethods = await this.repository.find({
-      where: { user: { id: userId } },
-    });
+  async findAll(options?: FindManyOptions<PaymentMethods>) {
+    const paymentMethods = await this.repository.find(options);
     return {
       status_code: 200,
       message: 'Payment methods fetched succsessfuly',
@@ -37,11 +35,8 @@ export class PaymentMethodsService {
     };
   }
 
-  async findOne(id: string, options?: FindOneOptions<PaymentMethods>) {
-    const paymentMethod = await this.repository.findOne({
-      where: { id },
-      ...options,
-    });
+  async findOne(options: FindOneOptions<PaymentMethods>) {
+    const paymentMethod = await this.repository.findOne(options);
     if (!paymentMethod) {
       throw new NotFoundException('Payment method not found');
     }
@@ -52,18 +47,18 @@ export class PaymentMethodsService {
     };
   }
 
-  async update(id: string, dto: UpdatePaymentMethodDto) {
-    await this.findOne(id);
+  async update(id: string, dto: UpdatePaymentMethodDto, userId: string) {
+    await this.findOne({ where: { id, user: { id: userId } } });
     await this.repository.update({ id }, { ...dto });
     return {
       status_code: 200,
       message: 'Payment method updated succsessfuly',
-      data: (await this.findOne(id)).data,
+      data: (await this.findOne({ where: { id } })).data,
     };
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, userId: string) {
+    await this.findOne({ where: { id, user: { id: userId } } });
     await this.repository.delete({ id });
     return {
       status_code: 200,
