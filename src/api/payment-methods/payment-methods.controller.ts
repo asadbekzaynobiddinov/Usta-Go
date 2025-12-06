@@ -15,6 +15,7 @@ import { CreatePaymentMethodDto } from './dto/create-payment-method.dto';
 import { UpdatePaymentMethodDto } from './dto/update-payment-method.dto';
 import { UserID } from 'src/common/decorator/user-id.decorator';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
+import { QueryDto } from 'src/common/dto';
 
 @UseGuards(JwtGuard)
 @Controller('payment-methods')
@@ -36,12 +37,7 @@ export class PaymentMethodsController {
   findAll(
     @UserID() id: string,
     @Query()
-    query: {
-      page: number;
-      limit: number;
-      orderBy: string;
-      order: 'ASC' | 'DESC';
-    },
+    query: QueryDto,
   ) {
     query.orderBy = 'created_at';
     query.order = 'DESC';

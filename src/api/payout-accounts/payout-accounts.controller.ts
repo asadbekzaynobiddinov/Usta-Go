@@ -15,6 +15,7 @@ import { CreatePayoutAccountDto } from './dto/create-payout-account.dto';
 import { UpdatePayoutAccountDto } from './dto/update-payout-account.dto';
 import { UserID } from 'src/common/decorator/user-id.decorator';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
+import { QueryDto } from 'src/common/dto';
 
 @UseGuards(JwtGuard)
 @Controller('payout-accounts')
@@ -36,12 +37,7 @@ export class PayoutAccountsController {
   findAll(
     @UserID() id: string,
     @Query()
-    query: {
-      page: number;
-      limit: number;
-      orderBy: string;
-      order: 'ASC' | 'DESC';
-    },
+    query: QueryDto,
   ) {
     const skip = (query.page - 1) * query.limit;
     query.orderBy = 'created_at';

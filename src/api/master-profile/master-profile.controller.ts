@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Delete,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { MasterProfileService } from './master-profile.service';
 import { CreateMasterProfileDto } from './dto/create-master-profile.dto';
@@ -42,14 +43,14 @@ export class MasterProfileController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.masterProfileService.findOneById(id);
   }
 
   @UseGuards(SelfGuard)
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateMasterProfileDto: UpdateMasterProfileDto,
   ) {
     return this.masterProfileService.update(id, updateMasterProfileDto);
@@ -57,7 +58,7 @@ export class MasterProfileController {
 
   @UseGuards(SelfGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.masterProfileService.delete(id);
   }
 }

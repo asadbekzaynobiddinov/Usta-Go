@@ -14,9 +14,9 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { AdminGuard } from 'src/common/guard/admin.guard';
-import { IQueryParams } from 'src/common/interface';
 import { SelfGuard } from 'src/common/guard/self.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { QueryDto } from 'src/common/dto';
 
 @UseGuards(JwtGuard)
 @Controller('user')
@@ -31,13 +31,11 @@ export class UserController {
 
   @UseGuards(AdminGuard)
   @Get()
-  findAll(@Query() query: IQueryParams) {
-    const page = query.page ?? 1;
-    const take = query.limit ?? 10;
-    const skip = (page - 1) * take;
+  findAll(@Query() query: QueryDto) {
+    const skip = (query.page - 1) * query.limit;
     return this.userService.findAll({
       skip,
-      take,
+      take: query.limit,
       relations: ['master_profile'],
     });
   }

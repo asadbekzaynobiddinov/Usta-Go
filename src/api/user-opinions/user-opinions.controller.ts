@@ -16,6 +16,7 @@ import { UpdateUserOpinionDto } from './dto/update-user-opinion.dto';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { UserID } from 'src/common/decorator/user-id.decorator';
 import { UserROLE } from 'src/common/decorator/user-role.decorator';
+import { QueryDto } from 'src/common/dto';
 
 @UseGuards(JwtGuard)
 @Controller('user-opinions')
@@ -38,12 +39,7 @@ export class UserOpinionsController {
     @UserID() userId: string,
     @UserROLE() role: string,
     @Query()
-    query: {
-      page: number;
-      limit: number;
-      orderBy: string;
-      order: 'ASC' | 'DESC';
-    },
+    query: QueryDto,
   ) {
     query.orderBy = 'created_at';
     query.order = 'DESC';

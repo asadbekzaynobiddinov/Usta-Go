@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { MasterServicesService } from './master-services.service';
 import { CreateMasterServiceDto } from './dto/create-master-service.dto';
@@ -60,7 +61,7 @@ export class MasterServicesController {
 
   @Get(':id')
   findOne(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @UserID() userId: string,
     @UserROLE() role: string,
   ) {
@@ -74,7 +75,7 @@ export class MasterServicesController {
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateMasterServiceDto: UpdateMasterServiceDto,
     @UserID() userId: string,
   ) {
@@ -86,7 +87,7 @@ export class MasterServicesController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @UserID() userId: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @UserID() userId: string) {
     return this.masterServicesService.remove(id, userId);
   }
 }

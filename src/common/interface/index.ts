@@ -26,17 +26,6 @@ export interface IGoogleProfile {
   };
 }
 
-export interface IQueryParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  sortBy?: string;
-  order?: 'asc' | 'desc';
-  status?: string;
-  fromDate?: string;
-  toDate?: string;
-}
-
 export interface IFindOptions<T = any> {
   skip?: number;
   take?: number;
