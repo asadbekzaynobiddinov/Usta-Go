@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { PaymentMethodsService } from './payment-methods.service';
 import { CreatePaymentMethodDto } from './dto/create-payment-method.dto';
@@ -54,15 +55,15 @@ export class PaymentMethodsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @UserID() userId: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string, @UserID() userId: string) {
     return this.paymentMethodsService.findOne({
-      where: { user: { id: userId } },
+      where: { id, user: { id: userId } },
     });
   }
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updatePaymentMethodDto: UpdatePaymentMethodDto,
     @UserID() userId: string,
   ) {
@@ -74,7 +75,7 @@ export class PaymentMethodsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @UserID() userId: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @UserID() userId: string) {
     return this.paymentMethodsService.remove(id, userId);
   }
 }

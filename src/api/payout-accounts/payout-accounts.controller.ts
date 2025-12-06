@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { PayoutAccountsService } from './payout-accounts.service';
 import { CreatePayoutAccountDto } from './dto/create-payout-account.dto';
@@ -54,7 +55,7 @@ export class PayoutAccountsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @UserID() userId: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string, @UserID() userId: string) {
     return this.payoutAccountsService.findOne({
       where: { id, master: { id: userId } },
     });
@@ -62,7 +63,7 @@ export class PayoutAccountsController {
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updatePayoutAccountDto: UpdatePayoutAccountDto,
     @UserID() userId: string,
   ) {
@@ -74,7 +75,7 @@ export class PayoutAccountsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @UserID() userId: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @UserID() userId: string) {
     return this.payoutAccountsService.remove(id, userId);
   }
 }

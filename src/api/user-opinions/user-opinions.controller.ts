@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { UserOpinionsService } from './user-opinions.service';
 import { CreateUserOpinionDto } from './dto/create-user-opinion.dto';
@@ -66,7 +67,7 @@ export class UserOpinionsController {
 
   @Get(':id')
   findOne(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @UserID() userId: string,
     @UserROLE() role: string,
   ) {
@@ -80,7 +81,7 @@ export class UserOpinionsController {
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserOpinionDto: UpdateUserOpinionDto,
     @UserID() userId: string,
   ) {
@@ -88,7 +89,7 @@ export class UserOpinionsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @UserID() userId: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @UserID() userId: string) {
     return this.userOpinionsService.remove(id, userId);
   }
 }

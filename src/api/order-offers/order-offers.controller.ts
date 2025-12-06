@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { OrderOffersService } from './order-offers.service';
 import { CreateOrderOfferDto } from './dto/create-order-offer.dto';
@@ -15,6 +16,7 @@ import { UpdateOrderOfferDto } from './dto/update-order-offer.dto';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { UserID } from 'src/common/decorator/user-id.decorator';
 import { UserROLE } from 'src/common/decorator/user-role.decorator';
+import { QueryDto } from 'src/common/dto';
 
 @UseGuards(JwtGuard)
 @Controller('order-offers')
@@ -37,15 +39,8 @@ export class OrderOffersController {
     @UserID() userId: string,
     @UserROLE() role: string,
     @Query()
-    query: {
-      page: number;
-      limit: number;
-      orderBy: string;
-      order: 'ASC' | 'DESC';
-    },
+    query: QueryDto,
   ) {
-    query.orderBy = 'created_at';
-    query.order = 'DESC';
     const skip = (query.page - 1) * query.limit;
     if (role === 'admin' || role === 'superadmin') {
       return this.orderOffersService.findAll({
@@ -64,7 +59,7 @@ export class OrderOffersController {
 
   @Get(':id')
   findOne(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @UserID() userId: string,
     @UserROLE() role: string,
   ) {
@@ -78,7 +73,7 @@ export class OrderOffersController {
 
   @Patch(':id')
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateOrderOfferDto: UpdateOrderOfferDto,
     @UserID() userId: string,
   ) {
@@ -86,7 +81,7 @@ export class OrderOffersController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @UserID() userId: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @UserID() userId: string) {
     return this.orderOffersService.remove(id, userId);
   }
 }

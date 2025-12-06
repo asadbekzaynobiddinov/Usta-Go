@@ -22,43 +22,33 @@ export class OrdersService {
     private readonly picturesRepository: OrderPicturesRepository,
   ) {}
   async create(dto: CreateOrderDto) {
-    const queryRunner = this.repository.manager.connection.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    const newOrder = this.repository.create({
+      user: { id: dto.user_id },
+      title: dto.title,
+      description: dto.description,
+      address: dto.address,
+    });
     try {
-      const newOrder = this.repository.create({
-        user: { id: dto.user_id },
-        title: dto.title,
-        description: dto.description,
-        address: dto.address,
-      });
+      await this.repository.save(newOrder);
 
-      const savedOrder = await queryRunner.manager.save(newOrder);
-
-      if (dto.pictures && dto.pictures.length > 0) {
-        const pictureEntities = dto.pictures.map((url) =>
-          this.picturesRepository.create({
-            order: { id: savedOrder.id },
+      if (dto.pictures?.length) {
+        for (const url of dto.pictures) {
+          const newPic = this.picturesRepository.create({
+            order: { id: newOrder.id },
             picture_url: url,
-          }),
-        );
-
-        savedOrder.pictures = pictureEntities;
+          });
+          await this.picturesRepository.save(newPic);
+        }
       }
-
-      await queryRunner.commitTransaction();
-
       return {
         status_code: 201,
-        message: 'Order created succsessfuly',
-        data: savedOrder,
+        message: 'Order created successfully',
+        data: newOrder,
       };
     } catch (error) {
       console.log(error);
-      await queryRunner.rollbackTransaction();
-      throw new ConflictException('Could not create order');
-    } finally {
-      await queryRunner.release();
+      await this.repository.delete({ id: newOrder.id });
+      throw new ConflictException('Could not crete order');
     }
   }
 
@@ -84,47 +74,43 @@ export class OrdersService {
   }
 
   async update(id: string, dto: UpdateOrderDto, userId: string) {
-    await this.findOne({ where: { id, user: { id: userId } } });
+    const data = (await this.findOne({ where: { id, user: { id: userId } } }))
+      .data;
 
-    const queryRunner = this.repository.manager.connection.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      await queryRunner.manager.update(
-        Orders,
-        { id },
-        {
-          ...dto,
-        },
-      );
+    const { pictures, ...updateData } = dto;
 
-      if (dto.pictures && dto.pictures.length > 0) {
-        for (const pic of dto.pictures) {
-          await queryRunner.manager.update(
-            OrderPictures,
+    await this.repository.update({ id }, { ...updateData });
+
+    if (pictures?.length) {
+      for (const pic of pictures) {
+        if (!pic.id) {
+          const newPic = this.picturesRepository.create({
+            order: { id: data.id },
+            picture_url: pic.picture_url,
+          });
+          await this.picturesRepository.save(newPic);
+          continue;
+        }
+
+        const picExists = await this.picturesRepository.exists({
+          where: { id: pic.id },
+        });
+
+        if (picExists) {
+          await this.picturesRepository.update(
             { id: pic.id },
-            {
-              picture_url: pic.picture_url,
-            },
+            { picture_url: pic.picture_url },
           );
         }
       }
-
-      await queryRunner.commitTransaction();
-
-      return {
-        status_code: 200,
-        message: 'Order updated succsessfuly',
-        data: (await this.findOne({ where: { id }, relations: ['pictures'] }))
-          .data,
-      };
-    } catch (error) {
-      console.log(error);
-      await queryRunner.rollbackTransaction();
-      throw new ConflictException('Could not update order');
-    } finally {
-      await queryRunner.release();
     }
+
+    return {
+      status_code: 200,
+      message: 'Order updated succsessfuly',
+      data: (await this.findOne({ where: { id }, relations: ['pictures'] }))
+        .data,
+    };
   }
 
   async remove(id: string, userId: string) {

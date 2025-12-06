@@ -15,6 +15,7 @@ import { UpdateMasterServiceDto } from './dto/update-master-service.dto';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { UserID } from 'src/common/decorator/user-id.decorator';
 import { UserROLE } from 'src/common/decorator/user-role.decorator';
+import { QueryDto } from 'src/common/dto';
 
 @UseGuards(JwtGuard)
 @Controller('master-services')
@@ -37,12 +38,7 @@ export class MasterServicesController {
     @UserID() id: string,
     @UserROLE() role: string,
     @Query()
-    query: {
-      page: number;
-      limit: number;
-      orderBy: string;
-      order: 'ASC' | 'DESC';
-    },
+    query: QueryDto,
   ) {
     const skip = (query.page - 1) * query.limit;
     query.orderBy = 'created_at';

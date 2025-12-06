@@ -1,10 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserOpinionDto } from './dto/create-user-opinion.dto';
 import { UpdateUserOpinionDto } from './dto/update-user-opinion.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -25,50 +19,30 @@ export class UserOpinionsService {
     private readonly picturesRepository: PictureOpinionsRepository,
   ) {}
   async create(dto: CreateUserOpinionDto) {
-    const queryRunner = this.repository.manager.connection.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    const newOpinion = this.repository.create({
+      user: { id: dto.user_id },
+      master: { id: dto.master_id },
+      order: { id: dto.order_id },
+      comment: dto.coment,
+    });
 
-    try {
-      const newOpinion = this.repository.create({
-        user: { id: dto.user_id },
-        master: { id: dto.master_id },
-        order: { id: dto.order_id },
-        rating: dto.rating,
-        comment: dto.coment,
-      });
+    await this.repository.save(newOpinion);
 
-      const savedOpinion = await queryRunner.manager.save(newOpinion);
-
-      if (dto.pictures && dto.pictures.length > 0) {
-        const pictureEntities = dto.pictures.map((url) =>
-          this.picturesRepository.create({
-            opinion: { id: savedOpinion.id },
-            picture_url: url,
-          }),
-        );
-
-        await queryRunner.manager.save(pictureEntities);
-
-        savedOpinion.pictures = pictureEntities;
+    if (dto.pictures?.length) {
+      for (const url of dto.pictures) {
+        const newPic = this.picturesRepository.create({
+          opinion: { id: newOpinion.id },
+          picture_url: url,
+        });
+        await this.picturesRepository.save(newPic);
       }
-
-      await queryRunner.commitTransaction();
-
-      return {
-        status_code: 201,
-        message: 'User opinion created successfully',
-        data: savedOpinion,
-      };
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw new ConflictException(
-        'Could not create user opinion',
-        error.message,
-      );
-    } finally {
-      await queryRunner.release();
     }
+
+    return {
+      status_code: 201,
+      message: 'User opinion created succsessfuly',
+      data: newOpinion,
+    };
   }
 
   async findAll(options?: FindManyOptions<UserOpinions>) {

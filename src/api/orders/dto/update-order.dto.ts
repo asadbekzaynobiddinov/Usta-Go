@@ -6,9 +6,20 @@ import {
   IsDateString,
   IsObject,
   IsArray,
+  IsUUID,
+  IsUrl,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { OrderStatus } from 'src/common/enum';
+
+class PicturesDto {
+  @IsUUID()
+  @IsOptional()
+  id?: string;
+
+  @IsUrl()
+  picture_url: string;
+}
 
 class CoordinatesDto {
   @IsOptional()
@@ -86,5 +97,7 @@ export class UpdateOrderDto {
 
   @IsOptional()
   @IsArray()
-  pictures?: { id: string; picture_url: string }[];
+  @ValidateNested()
+  @Type(() => PicturesDto)
+  pictures?: PicturesDto[];
 }

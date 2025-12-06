@@ -9,7 +9,9 @@ import { UserOpinions } from './user-opinions.entity';
 
 @Entity()
 export class Orders extends BaseEntity {
-  @ManyToOne(() => User, (user) => user.orders, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.orders, {
+    onDelete: 'CASCADE',
+  })
   user: User;
 
   @ManyToOne(() => MasterProfile, (master) => master.orders)
