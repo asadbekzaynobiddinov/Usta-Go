@@ -58,7 +58,7 @@ export enum OrderStatus {
 export enum OrderOfferStatus {
   PENDING = 'pending',
   ACCEPTED = 'accepted',
-  DECLINED = 'declined',
+  REJECTED = 'rejected',
   WITHDRAWN = 'withdrawn',
 }
 

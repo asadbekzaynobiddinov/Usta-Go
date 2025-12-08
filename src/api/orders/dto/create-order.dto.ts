@@ -5,6 +5,7 @@ import {
   ValidateNested,
   IsObject,
   IsArray,
+  IsNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -52,6 +53,10 @@ export class CreateOrderDto {
   @Type(() => AddressDto)
   @IsObject()
   address: AddressDto;
+
+  @IsOptional()
+  @IsNumber()
+  offered_price: number;
 
   @IsOptional()
   user_id: string;

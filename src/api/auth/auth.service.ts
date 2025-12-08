@@ -183,7 +183,6 @@ export class AuthService {
         await this.userRepository.save(newUser);
         const payload: IPayload = {
           sub: newUser.id,
-          interfaceTo: 'user',
           role: 'user',
         };
         const token = this.jwt.sign(payload, {

@@ -2,7 +2,7 @@ import { IsString, IsNumber, IsOptional, IsUUID } from 'class-validator';
 
 export class CreateOrderOfferDto {
   @IsUUID()
-  orderId: string;
+  order_id: string;
 
   @IsNumber()
   offered_price: number;

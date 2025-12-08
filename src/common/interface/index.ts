@@ -1,7 +1,6 @@
 export interface IPayload {
   sub: string;
   email?: string;
-  interfaceTo?: string;
   role?: string;
   iat?: number;
   exp?: number;
@@ -24,16 +23,4 @@ export interface IGoogleProfile {
     email: string;
     email_verified: boolean;
   };
-}
-
-export interface IFindOptions<T = any> {
-  skip?: number;
-  take?: number;
-  search?: string;
-  where?: Partial<T>;
-  orderBy?: {
-    [P in keyof T]?: 'ASC' | 'DESC';
-  };
-  select?: (keyof T)[];
-  relations?: string[];
 }

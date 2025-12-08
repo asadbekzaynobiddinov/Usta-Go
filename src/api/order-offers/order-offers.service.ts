@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OrderOffers, OrderOffersRepository } from 'src/core';
 import { CreateOrderOfferDto } from './dto/create-order-offer.dto';
@@ -12,10 +16,16 @@ export class OrderOffersService {
     private readonly repository: OrderOffersRepository,
   ) {}
   async create(dto: CreateOrderOfferDto) {
+    const offered = await this.repository.exists({
+      where: { order: { id: dto.order_id } },
+    });
+    if (offered) {
+      throw new BadRequestException('You already sent offer to this order');
+    }
     const newOffer = this.repository.create({
       ...dto,
       master: { id: dto.master_id },
-      order: { id: dto.orderId },
+      order: { id: dto.order_id },
     });
     await this.repository.save(newOffer);
     return {

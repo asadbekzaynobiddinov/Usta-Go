@@ -34,6 +34,14 @@ export class Orders extends BaseEntity {
   })
   status: OrderStatus;
 
+  @Column({
+    nullable: true,
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+  })
+  offered_price: number;
+
   @Column({ type: 'jsonb', nullable: false })
   address: {
     country: string;

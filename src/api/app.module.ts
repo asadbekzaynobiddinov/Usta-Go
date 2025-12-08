@@ -16,6 +16,7 @@ import { MessageAttachmentsModule } from './message-attachments/message-attachme
 import { MessagesModule } from './messages/messages.module';
 import { ChatModule } from './chat/chat.module';
 import { UploadModule } from './upload/upload.module';
+import { WebSocketModule } from './websocket/websocket.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { UploadModule } from './upload/upload.module';
     MessagesModule,
     MessageAttachmentsModule,
     UploadModule,
+    WebSocketModule,
   ],
 })
 export class AppModule {}

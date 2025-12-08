@@ -47,6 +47,7 @@ export class OrderOffersController {
         skip,
         take: query.limit,
         order: { [query.orderBy]: query.order },
+        relations: ['order'],
       });
     }
     return this.orderOffersService.findAll({
@@ -54,6 +55,7 @@ export class OrderOffersController {
       skip,
       take: query.limit,
       order: { [query.orderBy]: query.order },
+      relations: ['order'],
     });
   }
 
@@ -64,10 +66,14 @@ export class OrderOffersController {
     @UserROLE() role: string,
   ) {
     if (role === 'admin' || role === 'superadmin') {
-      return this.orderOffersService.findOne({ where: { id } });
+      return this.orderOffersService.findOne({
+        where: { id },
+        relations: ['order'],
+      });
     }
     return this.orderOffersService.findOne({
       where: { id, master: { id: userId } },
+      relations: ['order'],
     });
   }
 

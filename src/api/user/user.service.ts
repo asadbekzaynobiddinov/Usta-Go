@@ -11,8 +11,8 @@ import {
   UserRepository,
 } from 'src/core';
 import { CreateUserDto } from './dto/create-user.dto';
-import { IFindOptions } from 'src/common/interface';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { FindManyOptions } from 'typeorm';
 
 @Injectable()
 export class UserService {
@@ -38,7 +38,7 @@ export class UserService {
     };
   }
 
-  async findAll(options?: IFindOptions<User>) {
+  async findAll(options?: FindManyOptions<User>) {
     const users = await this.repository.find(options);
     return {
       status_code: 200,

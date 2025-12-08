@@ -100,4 +100,8 @@ export class UpdateOrderDto {
   @ValidateNested()
   @Type(() => PicturesDto)
   pictures?: PicturesDto[];
+
+  @IsUUID()
+  @IsOptional()
+  master_id: string;
 }

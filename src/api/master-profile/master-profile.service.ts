@@ -7,9 +7,10 @@ import { CreateMasterProfileDto } from './dto/create-master-profile.dto';
 import { MasterProfile, MasterProfileRepository } from 'src/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MasterStatus } from 'src/common/enum';
-import { IFindOptions, IPayload } from 'src/common/interface';
+import { IPayload } from 'src/common/interface';
 import { UpdateMasterProfileDto } from './dto/update-master-profile.dto';
 import { JwtService } from '@nestjs/jwt';
+import { FindManyOptions } from 'typeorm';
 
 @Injectable()
 export class MasterProfileService {
@@ -46,7 +47,7 @@ export class MasterProfileService {
     };
   }
 
-  async findAll(options?: IFindOptions<MasterProfile>) {
+  async findAll(options?: FindManyOptions<MasterProfile>) {
     const profiles = await this.repository.find(options);
     return {
       status_code: 200,
@@ -93,7 +94,6 @@ export class MasterProfileService {
     }
     const payload: IPayload = {
       sub: masterProfile.id,
-      interfaceTo: 'master',
       role: 'master',
     };
     const token = this.jwt.sign(payload, {

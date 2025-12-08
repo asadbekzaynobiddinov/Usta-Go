@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -7,12 +8,17 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  ChatRooms,
+  ChatRoomsRepository,
+  OrderOffers,
+  OrderOffersRepository,
   OrderPictures,
   OrderPicturesRepository,
   Orders,
   OrdersRepository,
 } from 'src/core';
 import { FindManyOptions, FindOneOptions } from 'typeorm';
+import { OrderOfferStatus } from 'src/common/enum';
 
 @Injectable()
 export class OrdersService {
@@ -20,6 +26,10 @@ export class OrdersService {
     @InjectRepository(Orders) private readonly repository: OrdersRepository,
     @InjectRepository(OrderPictures)
     private readonly picturesRepository: OrderPicturesRepository,
+    @InjectRepository(OrderOffers)
+    private readonly orderOffersRepository: OrderOffersRepository,
+    @InjectRepository(ChatRooms)
+    private readonly chatRepository: ChatRoomsRepository,
   ) {}
   async create(dto: CreateOrderDto) {
     const newOrder = this.repository.create({
@@ -31,6 +41,8 @@ export class OrdersService {
     try {
       await this.repository.save(newOrder);
 
+      const pictures: OrderPictures[] = [];
+
       if (dto.pictures?.length) {
         for (const url of dto.pictures) {
           const newPic = this.picturesRepository.create({
@@ -38,12 +50,13 @@ export class OrdersService {
             picture_url: url,
           });
           await this.picturesRepository.save(newPic);
+          pictures.push(newPic);
         }
       }
       return {
         status_code: 201,
         message: 'Order created successfully',
-        data: newOrder,
+        data: { ...newOrder, pictures },
       };
     } catch (error) {
       console.log(error);
@@ -73,11 +86,74 @@ export class OrdersService {
     };
   }
 
+  async findAllOffers(options: FindManyOptions<OrderOffers>) {
+    const offers = await this.orderOffersRepository.find(options);
+    return {
+      status_code: 200,
+      message: 'Offers fetched succsessfuly',
+      data: offers,
+    };
+  }
+
+  async acceptOffer(options: FindOneOptions<OrderOffers>, userId: string) {
+    const offer = await this.orderOffersRepository.findOne(options);
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+
+    if (offer.status === OrderOfferStatus.ACCEPTED) {
+      return {
+        status_code: 200,
+        message: 'Offer already accepted',
+        data: offer,
+      };
+    }
+
+    offer.status = OrderOfferStatus.ACCEPTED;
+    await this.orderOffersRepository.save(offer);
+
+    const newChat = this.chatRepository.create({
+      user: { id: userId },
+      master: { id: offer.master.id },
+    });
+
+    await this.chatRepository.save(newChat);
+
+    return {
+      status_code: 200,
+      message: 'Offer accepted succsessfuly',
+      data: { offer, chat: newChat },
+    };
+  }
+
+  async rejectOffer(options: FindOneOptions<OrderOffers>) {
+    const offer = await this.orderOffersRepository.findOne(options);
+
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+
+    if (offer.status === OrderOfferStatus.REJECTED) {
+      throw new BadRequestException('Offer already rejected');
+    }
+
+    offer.status = OrderOfferStatus.REJECTED;
+
+    await this.orderOffersRepository.save(offer);
+  }
+
   async update(id: string, dto: UpdateOrderDto, userId: string) {
     const data = (await this.findOne({ where: { id, user: { id: userId } } }))
       .data;
 
-    const { pictures, ...updateData } = dto;
+    const { pictures, master_id, ...updateData } = dto;
+
+    if (master_id) {
+      await this.repository.update(
+        { id },
+        { ...updateData, master: { id: master_id } },
+      );
+    }
 
     await this.repository.update({ id }, { ...updateData });
 
