@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { Socket } from 'socket.io';
+import { Server } from 'socket.io';
 
 @Injectable()
 export class MessageHandler {
-  handleSendMessage(message: string, socket: Socket) {
+  handleSendMessage(message: string, server: Server) {
     console.log(message);
-    socket.emit('message-new', message);
+    server.emit('message:new', message);
   }
 }

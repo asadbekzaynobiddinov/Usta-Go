@@ -3,14 +3,12 @@ import {
   Get,
   Post,
   Body,
-  // Patch,
   Param,
   Delete,
   UseGuards,
 } from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
-// import { UpdateMessageDto } from './dto/update-message.dto';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 
 @UseGuards(JwtGuard)

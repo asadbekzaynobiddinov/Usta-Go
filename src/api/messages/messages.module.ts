@@ -15,5 +15,6 @@ import { config } from 'src/config';
   ],
   controllers: [MessagesController],
   providers: [MessagesService],
+  exports: [MessagesService],
 })
 export class MessagesModule {}

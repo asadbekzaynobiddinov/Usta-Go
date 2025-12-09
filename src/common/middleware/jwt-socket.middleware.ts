@@ -3,13 +3,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { JwtService } from '@nestjs/jwt';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { Socket } from 'socket.io';
+import { MySocket } from '../types';
 
 @Injectable()
 export class JwtSocketMiddleware {
   constructor(private jwtService: JwtService) {}
 
-  use = (client: Socket, next: (err?: any) => void) => {
+  use = (client: MySocket, next: (err?: any) => void) => {
     try {
       const auth =
         client.handshake.auth?.token || client.handshake.headers?.authorization;
@@ -26,7 +26,7 @@ export class JwtSocketMiddleware {
 
       const decoded = this.jwtService.verify(token as string);
 
-      client.data.user = decoded;
+      client.user = decoded;
 
       next();
     } catch (error) {

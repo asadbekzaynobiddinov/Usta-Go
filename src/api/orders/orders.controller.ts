@@ -38,7 +38,7 @@ export class OrdersController {
   ) {
     console.log(query);
     const skip = (query.page - 1) * query.limit;
-    if (role === 'admin' || role === 'superadmin') {
+    if (role === 'admin' || role === 'superadmin' || role === 'master') {
       return this.ordersService.findAll({
         skip,
         take: query.limit,
@@ -102,6 +102,7 @@ export class OrdersController {
     return this.ordersService.acceptOffer(
       {
         where: { id, order: { user: { id: userId } } },
+        relations: ['master'],
       },
       userId,
     );

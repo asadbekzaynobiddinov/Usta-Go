@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Messages, MessagesRepository } from 'src/core';
 import { CreateMessageDto } from './dto/create-message.dto';
-// import { UpdateMessageDto } from './dto/update-message.dto';
 
 @Injectable()
 export class MessagesService {
@@ -11,9 +10,10 @@ export class MessagesService {
   ) {}
   async create(dto: CreateMessageDto) {
     const message = this.repository.create({
-      chat: { id: dto.chat_id },
-      user: { id: dto.sender_id },
+      chat_room: { id: dto.chat_id },
       context: dto.context,
+      type: dto.type,
+      sender_id: dto.sender_id,
     });
     await this.repository.save(message);
     return {
@@ -30,10 +30,6 @@ export class MessagesService {
   findOne(id: number) {
     return `This action returns a #${id} message`;
   }
-
-  // update(id: number, updateMessageDto: UpdateMessageDto) {
-  //   return `This action updates a #${id} message`;
-  // }
 
   remove(id: number) {
     return `This action removes a #${id} message`;

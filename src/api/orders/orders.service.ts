@@ -96,34 +96,40 @@ export class OrdersService {
   }
 
   async acceptOffer(options: FindOneOptions<OrderOffers>, userId: string) {
-    const offer = await this.orderOffersRepository.findOne(options);
-    if (!offer) {
-      throw new NotFoundException('Offer not found');
-    }
+    try {
+      const offer = await this.orderOffersRepository.findOne(options);
+      if (!offer) {
+        throw new NotFoundException('Offer not found');
+      }
 
-    if (offer.status === OrderOfferStatus.ACCEPTED) {
+      if (offer.status === OrderOfferStatus.ACCEPTED) {
+        return {
+          status_code: 200,
+          message: 'Offer already accepted',
+          data: offer,
+        };
+      }
+
+      offer.status = OrderOfferStatus.ACCEPTED;
+      await this.orderOffersRepository.save(offer);
+
+      console.log(offer.master);
+
+      const newChat = this.chatRepository.create({
+        user: { id: userId },
+        master: { id: offer.master.id },
+      });
+
+      await this.chatRepository.save(newChat);
+
       return {
         status_code: 200,
-        message: 'Offer already accepted',
-        data: offer,
+        message: 'Offer accepted succsessfuly',
+        data: { offer, chat: newChat },
       };
+    } catch (error) {
+      console.log(error);
     }
-
-    offer.status = OrderOfferStatus.ACCEPTED;
-    await this.orderOffersRepository.save(offer);
-
-    const newChat = this.chatRepository.create({
-      user: { id: userId },
-      master: { id: offer.master.id },
-    });
-
-    await this.chatRepository.save(newChat);
-
-    return {
-      status_code: 200,
-      message: 'Offer accepted succsessfuly',
-      data: { offer, chat: newChat },
-    };
   }
 
   async rejectOffer(options: FindOneOptions<OrderOffers>) {
@@ -140,6 +146,12 @@ export class OrdersService {
     offer.status = OrderOfferStatus.REJECTED;
 
     await this.orderOffersRepository.save(offer);
+
+    return {
+      status_code: 200,
+      message: 'Offer rejected succsessfuly',
+      data: offer,
+    };
   }
 
   async update(id: string, dto: UpdateOrderDto, userId: string) {

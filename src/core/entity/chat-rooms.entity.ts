@@ -1,4 +1,4 @@
-import { Entity, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import { Entity, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
 import { User } from './user.entity';
 import { Messages } from './messages.entity';
@@ -16,9 +16,4 @@ export class ChatRooms extends BaseEntity {
 
   @OneToMany(() => Messages, (messages) => messages.chat_room)
   messages: Messages[];
-
-  @OneToOne(() => Messages, (messages) => messages.chat, {
-    onDelete: 'SET NULL',
-  })
-  last_message: Messages;
 }
