@@ -17,6 +17,8 @@ import { MessagesModule } from './messages/messages.module';
 import { ChatModule } from './chat/chat.module';
 import { UploadModule } from './upload/upload.module';
 import { WebSocketModule } from './websocket/websocket.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -28,6 +30,14 @@ import { WebSocketModule } from './websocket/websocket.module';
     }),
     JwtModule.register({
       secret: config.ACCESS_TOKEN_KEY,
+    }),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000,
+          limit: 50,
+        },
+      ],
     }),
     AdminModule,
     AuthModule,
@@ -44,6 +54,12 @@ import { WebSocketModule } from './websocket/websocket.module';
     MessageAttachmentsModule,
     UploadModule,
     WebSocketModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}
