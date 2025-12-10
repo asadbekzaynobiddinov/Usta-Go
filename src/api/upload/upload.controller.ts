@@ -5,11 +5,14 @@ import {
   UseInterceptors,
   BadRequestException,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage, File } from 'multer';
+import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
+import * as fs from 'fs';
+import { IFile } from 'src/common/interface';
 
 @UseGuards(JwtGuard)
 @Controller('upload')
@@ -18,7 +21,28 @@ export class UploadController {
   @UseInterceptors(
     FilesInterceptor('files', 100, {
       storage: diskStorage({
-        destination: './uploads',
+        destination: (req, file, callback) => {
+          const folder = req.query.folder as string;
+
+          const allowedFolders = ['chat', 'profile', 'order', 'opinion'];
+
+          if (!allowedFolders.includes(folder)) {
+            return callback(
+              new BadRequestException(
+                `Invalid folder. Allowed: ${allowedFolders.join(', ')}`,
+              ),
+              null,
+            );
+          }
+
+          const uploadPath = `./uploads/${folder}`;
+
+          if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+          }
+
+          callback(null, uploadPath);
+        },
         filename: (req, file, callback) => {
           const uniqueName = `${Date.now()}-${Math.random()
             .toString(36)
@@ -29,25 +53,35 @@ export class UploadController {
       fileFilter: (req, file, callback) => {
         const allowedExtensions = ['.jpg', '.jpeg', '.png', '.svg'];
         const fileExt = extname(file.originalname).toLowerCase();
-        try {
-          if (!allowedExtensions.includes(fileExt)) {
-            throw new BadRequestException(
+
+        if (!allowedExtensions.includes(fileExt)) {
+          return callback(
+            new BadRequestException(
               `Only JPEG, JPG, PNG, SVG formats can be uploaded`,
-            );
-          }
-          callback(null, true);
-        } catch (error) {
-          callback(error, false);
+            ),
+            false,
+          );
         }
+
+        callback(null, true);
       },
     }),
   )
-  uploadFiles(@UploadedFiles() files: File[]) {
+  uploadFiles(
+    @UploadedFiles()
+    files: IFile[],
+    @Query('folder') folder: string,
+  ) {
+    if (!folder) {
+      throw new BadRequestException('folder query parameter is required');
+    }
+
+    console.log(files);
+
     try {
       const data = files.map((file) => ({
-        originalname: file.originalname,
         filename: file.filename,
-        path: `http://localhost:3000/static/${file.filename}`,
+        path: `http://localhost:3000/static/${folder}/${file.filename}`,
       }));
 
       return {
@@ -56,7 +90,8 @@ export class UploadController {
         data,
       };
     } catch (error) {
-      throw new BadRequestException(error.message);
+      console.log(error);
+      throw new BadRequestException('File upload error');
     }
   }
 }
