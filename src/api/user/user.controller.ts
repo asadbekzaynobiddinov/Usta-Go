@@ -40,7 +40,6 @@ export class UserController {
     });
   }
 
-  @UseGuards(SelfGuard)
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.userService.findOneById(id);

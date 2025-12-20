@@ -43,8 +43,8 @@ export class MasterProfile extends BaseEntity {
   @Column({ nullable: false })
   selfie_image_url: string;
 
-  @Column({ nullable: false, type: 'float', default: 5.0 })
-  rating_avg: number;
+  @Column({ nullable: false, type: 'int', default: 0 })
+  rating_sum: number;
 
   @Column({ type: 'int', default: 0 })
   rating_count: number;

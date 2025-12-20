@@ -1,14 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { FindManyOptions, FindOneOptions } from 'typeorm';
 import { CreateUserOpinionDto } from './dto/create-user-opinion.dto';
 import { UpdateUserOpinionDto } from './dto/update-user-opinion.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import {
+  Orders,
   PictureOpinionsRepository,
   PicturesOfOpinions,
   UserOpinions,
   UserOpinionsRepository,
+  OrdersRepository,
+  MasterProfile,
+  MasterProfileRepository,
 } from 'src/core';
-import { FindManyOptions, FindOneOptions } from 'typeorm';
 
 @Injectable()
 export class UserOpinionsService {
@@ -17,13 +25,33 @@ export class UserOpinionsService {
     private readonly repository: UserOpinionsRepository,
     @InjectRepository(PicturesOfOpinions)
     private readonly picturesRepository: PictureOpinionsRepository,
+    @InjectRepository(Orders)
+    private readonly ordersRepository: OrdersRepository,
+    @InjectRepository(MasterProfile)
+    private readonly masterRepository: MasterProfileRepository,
   ) {}
   async create(dto: CreateUserOpinionDto) {
+    const order = await this.ordersRepository.findOne({
+      where: { id: dto.order_id },
+      relations: ['master', 'user', 'user_opinion'],
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    if (!order.master) {
+      throw new BadRequestException('Order has no assigned master');
+    }
+    if (order.user_opinion) {
+      throw new BadRequestException('Opinion for this order already exists');
+    }
+
     const newOpinion = this.repository.create({
-      user: { id: dto.user_id },
-      master: { id: dto.master_id },
-      order: { id: dto.order_id },
+      user: { id: order.user.id },
+      master: { id: order.master.id },
+      order: { id: order.id },
       comment: dto.coment,
+      rating: dto.rating,
     });
 
     await this.repository.save(newOpinion);
@@ -38,10 +66,23 @@ export class UserOpinionsService {
       }
     }
 
+    await this.masterRepository.update(
+      { id: order.master.id },
+      {
+        rating_sum: () => `rating_sum + ${dto.rating}`,
+        rating_count: () => `rating_count + 1`,
+      },
+    );
+
     return {
       status_code: 201,
       message: 'User opinion created succsessfuly',
-      data: newOpinion,
+      data: (
+        await this.findOne({
+          where: { id: newOpinion.id },
+          relations: ['pictures'],
+        })
+      ).data,
     };
   }
 
@@ -66,18 +107,49 @@ export class UserOpinionsService {
     };
   }
 
-  async update(id: string, dto: UpdateUserOpinionDto, userId: string) {
-    await this.findOne({ where: { id, user: { id: userId } } });
-    await this.repository.update({ id }, {});
-    return {
-      status_code: 200,
-      message: 'User opinion updated succsessfuly',
-      data: (await this.findOne({ where: { id } })).data,
-    };
+  async update(id: string, dto: UpdateUserOpinionDto) {
+    const opinion = (
+      await this.findOne({ where: { id }, relations: ['master'] })
+    ).data;
+    const { pictures, rating, ...updateData } = dto;
+
+    await this.repository.update({ id }, { ...updateData, rating });
+
+    await this.masterRepository.update(
+      {
+        id: opinion.master.id,
+      },
+      {
+        rating_sum: () => `rating_sum - ${opinion.rating} + ${rating}`,
+      },
+    );
+
+    if (pictures?.length) {
+      for (const pic of pictures) {
+        await this.picturesRepository.update(
+          { id: pic.id },
+          { picture_url: pic.picture_url },
+        );
+      }
+      return {
+        status_code: 200,
+        message: 'User opinion updated succsessfuly',
+        data: (await this.findOne({ where: { id } })).data,
+      };
+    }
   }
 
-  async remove(id: string, userId: string) {
-    await this.findOne({ where: { id, user: { id: userId } } });
+  async remove(id: string) {
+    const opinion = (await this.findOne({ where: { id } })).data;
+    await this.masterRepository.update(
+      {
+        id: opinion.master.id,
+      },
+      {
+        rating_sum: () => `rating_sum - ${opinion.rating}`,
+        rating_count: () => `rating_count - 1`,
+      },
+    );
     await this.repository.delete({ id });
     return {
       status_code: 200,

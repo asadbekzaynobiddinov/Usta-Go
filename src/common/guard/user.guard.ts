@@ -4,21 +4,15 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from '@nestjs/common';
-import { RoleAdmin } from '../enum';
 
 @Injectable()
-export class SelfGuard implements CanActivate {
+export class UserGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
-    if (
-      (req.user?.role && req.user?.role === RoleAdmin.SUPERADMIN) ||
-      req.user?.role === RoleAdmin.ADMIN
-    ) {
+    if (!req.user?.role || req.user?.role !== 'user') {
+      throw new ForbiddenException('Forbidden user');
+    } else {
       return true;
     }
-    if (req.params.id !== req.user.sub) {
-      throw new ForbiddenException('Forbidden user');
-    }
-    return true;
   }
 }

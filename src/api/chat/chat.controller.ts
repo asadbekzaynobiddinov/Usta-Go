@@ -1,7 +1,16 @@
-import { Controller, Get, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Delete,
+  UseGuards,
+  Query,
+} from '@nestjs/common';
 import { ChatService } from './chat.service';
-// import { UpdateChatDto } from './dto/update-chat.dto';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
+import { UserID } from 'src/common/decorator/user-id.decorator';
+import { UserROLE } from 'src/common/decorator/user-role.decorator';
+import { QueryDto } from 'src/common/dto';
 
 @UseGuards(JwtGuard)
 @Controller('chat')
@@ -9,8 +18,34 @@ export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Get()
-  findAll() {
-    return this.chatService.findAll();
+  findAll(
+    @UserID() userId: string,
+    @UserROLE() userRole: string,
+    @Query() query: QueryDto,
+  ) {
+    const skip = (query.page - 1) * query.limit;
+    console.log(userRole);
+    if (userRole === 'admin' || userRole === 'superadmin') {
+      return this.chatService.findAll({
+        skip,
+        take: query.limit,
+        order: { [query.orderBy]: query.order },
+      });
+    } else if (userRole === 'user') {
+      return this.chatService.findAll({
+        where: { user: { id: userId } },
+        skip,
+        take: query.limit,
+        order: { [query.orderBy]: query.order },
+      });
+    } else if (userRole === 'master') {
+      return this.chatService.findAll({
+        where: { master: { id: userId } },
+        skip,
+        take: query.limit,
+        order: { [query.orderBy]: query.order },
+      });
+    }
   }
 
   @Get(':id')

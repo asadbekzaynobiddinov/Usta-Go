@@ -1,8 +1,11 @@
-import { Controller, Get, Req, UseGuards, Post, Body } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards, Body, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-// import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { IGoogleProfile } from 'src/common/interface';
+import { VerifyNumberDto } from './dto/verify-number.dto';
+import { SendOtpDto } from './dto/send-otp.dto';
+import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
+import { UserID } from 'src/common/decorator/user-id.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -23,11 +26,6 @@ export class AuthController {
   //   return this.authService.login(user.email, user.password);
   // }
 
-  @Post('send-otp')
-  async sendOtp(@Body() data: { phoneNumber: string }) {
-    return this.authService.sendOtp(data.phoneNumber);
-  }
-
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth() {}
@@ -36,5 +34,16 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   googleAuthRedirect(@Req() req: { user: IGoogleProfile }) {
     return this.authService.googleAuth(req.user);
+  }
+
+  @UseGuards(JwtGuard)
+  @Post('send-otp')
+  async sendOtp(@Body() body: SendOtpDto, @UserID() userId: string) {
+    return this.authService.sendOtp(body.phone_number, userId);
+  }
+
+  @Post('verify-number')
+  verifyNumber(@Body() body: VerifyNumberDto) {
+    return this.authService;
   }
 }

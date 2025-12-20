@@ -16,8 +16,9 @@ import { UpdatePaymentMethodDto } from './dto/update-payment-method.dto';
 import { UserID } from 'src/common/decorator/user-id.decorator';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { QueryDto } from 'src/common/dto';
+import { UserGuard } from 'src/common/guard/user.guard';
 
-@UseGuards(JwtGuard)
+@UseGuards(JwtGuard, UserGuard)
 @Controller('payment-methods')
 export class PaymentMethodsController {
   constructor(private readonly paymentMethodsService: PaymentMethodsService) {}

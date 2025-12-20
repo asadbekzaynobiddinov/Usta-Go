@@ -66,4 +66,7 @@ export class UpdateMasterProfileDto {
   @IsOptional()
   @IsEnum(MasterStatus)
   status?: MasterStatus;
+
+  @IsOptional()
+  rating_sum?: number;
 }

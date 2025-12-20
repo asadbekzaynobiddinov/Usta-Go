@@ -45,8 +45,8 @@ export class MasterServicesService {
     };
   }
 
-  async update(id: string, dto: UpdateMasterServiceDto, userId: string) {
-    await this.findOne({ where: { id, master: { id: userId } } });
+  async update(id: string, dto: UpdateMasterServiceDto) {
+    await this.findOne({ where: { id } });
     await this.repository.update({ id }, { ...dto });
     return {
       status_code: 200,
@@ -55,8 +55,8 @@ export class MasterServicesService {
     };
   }
 
-  async remove(id: string, userId: string) {
-    await this.findOne({ where: { id, master: { id: userId } } });
+  async remove(id: string) {
+    await this.findOne({ where: { id } });
     try {
       await this.repository.delete({ id });
     } catch (error) {

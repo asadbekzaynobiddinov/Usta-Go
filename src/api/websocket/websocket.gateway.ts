@@ -9,19 +9,13 @@ import {
   OnGatewayInit,
   ConnectedSocket,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { RedisService } from './redis.service';
+import { Server } from 'socket.io';
+import { Inject } from '@nestjs/common';
+import { Redis } from 'ioredis';
 import { JwtSocketMiddleware } from 'src/common/middleware/jwt-socket.middleware';
-import { ChatIdDto, MessageBodyDto } from './dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import {
-  Messages,
-  MessagesRepository,
-  ChatRooms,
-  ChatRoomsRepository,
-} from 'src/core';
+import { MessageBodyDto } from './dto';
 import { MySocket } from 'src/common/types';
-import { UsePipes, ValidationPipe } from '@nestjs/common';
+import { MessageHandler } from './handlers/message.handler';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -33,76 +27,38 @@ export class SocketGateway
   server: Server;
 
   constructor(
-    private readonly redis: RedisService,
     private readonly jwtMiddleware: JwtSocketMiddleware,
-    @InjectRepository(Messages)
-    private readonly messageRepository: MessagesRepository,
-    @InjectRepository(ChatRooms)
-    private readonly chatRepository: ChatRoomsRepository,
+    private readonly messageHandler: MessageHandler,
+    @Inject('REDIS_CLIENT') private readonly redis: Redis,
   ) {}
 
   afterInit() {
     this.server.use(this.jwtMiddleware.use.bind(this.jwtMiddleware));
   }
 
-  async handleConnection(client: Socket) {
-    await this.redis.onConnect(client.id);
+  async handleConnection(client: MySocket) {
+    const clientData = {
+      id: client.id,
+      dbId: client.user.sub,
+    };
+    await this.redis.hset(`user:${client.user.sub}`, clientData);
   }
 
-  async handleDisconnect(client: Socket) {
-    await this.redis.onDisconnect(client.id);
-    console.log(client.id, 'disconnected');
+  async handleDisconnect(client: MySocket) {
+    await this.redis.del(`user:${client.user.sub}`);
   }
 
   @SubscribeMessage('chat:join')
-  @UsePipes(new ValidationPipe())
-  async onJoinChat(
-    @MessageBody() body: ChatIdDto,
-    @ConnectedSocket() client: Socket,
-  ) {
-    const chatExists = await this.chatRepository.exists({
-      where: { id: body.chat_id },
-    });
-    if (!chatExists) {
-      return {
-        status_code: 404,
-        message: 'Chat not found',
-        data: {},
-      };
-    }
-    await client.join(`chat:${body.chat_id}`);
-    return {
-      status_code: 200,
-      message: 'Joined to chat succsessfuly',
-      data: {},
-    };
+  onJoinChat(@ConnectedSocket() client: MySocket) {
+    console.log(client.user.sub);
   }
 
   @SubscribeMessage('message:send')
-  async messageSend(
+  messageSend(
     @MessageBody() body: MessageBodyDto,
     @ConnectedSocket() client: MySocket,
   ) {
-    const chat = await this.chatRepository.findOne({
-      where: { id: body.chat_id },
-      relations: ['user', 'master'],
-    });
-    if (!chat) {
-      return { status_code: 404, message: 'Chat not found' };
-    }
-    console.log(body);
-    const newMessage = this.messageRepository.create({
-      chat_room: { id: chat.id },
-      context: body.message,
-      sender_id: client.user.sub,
-    });
-
-    await this.messageRepository.save(newMessage);
-
-    this.server.to(`chat:${body.chat_id}`).emit('message:new', {
-      ...body,
-    });
-
-    return { sent: true };
+    body.sender_id = client.user.sub;
+    return this.messageHandler.handleSendMessage(body, this.server);
   }
 }

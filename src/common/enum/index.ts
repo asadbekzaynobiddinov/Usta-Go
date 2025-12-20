@@ -98,3 +98,9 @@ export enum PaymentProvider {
   PAYME = 'payme',
   CLICK = 'click',
 }
+
+export enum UserAccountStatus {
+  NOT_FILLED = 'notfilled',
+  FULFILLED = 'fulfilled',
+  VERIFIED = 'verified',
+}

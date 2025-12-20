@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsUrl, IsOptional } from 'class-validator';
+import { IsString, IsEnum, IsUrl, IsOptional, IsInt } from 'class-validator';
 import { MasterGender, MasterStatus } from 'src/common/enum';
 
 export class CreateMasterProfileDto {
@@ -20,4 +20,12 @@ export class CreateMasterProfileDto {
   @IsOptional()
   @IsEnum(MasterStatus)
   status?: MasterStatus;
+
+  @IsOptional()
+  @IsString()
+  bio?: string;
+
+  @IsOptional()
+  @IsInt()
+  experience: number;
 }

@@ -1,4 +1,22 @@
-import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
+
+class PicturesDto {
+  @IsUUID()
+  @IsOptional()
+  id?: string;
+
+  @IsUrl()
+  picture_url: string;
+}
 
 export class UpdateUserOpinionDto {
   @IsOptional()
@@ -11,5 +29,7 @@ export class UpdateUserOpinionDto {
 
   @IsOptional()
   @IsArray()
-  pictures?: string[];
+  @ValidateNested()
+  @Type(() => PicturesDto)
+  pictures?: PicturesDto[];
 }

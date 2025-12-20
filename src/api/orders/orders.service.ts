@@ -113,7 +113,10 @@ export class OrdersService {
       offer.status = OrderOfferStatus.ACCEPTED;
       await this.orderOffersRepository.save(offer);
 
-      console.log(offer.master);
+      await this.repository.update(
+        { id: offer.order.id },
+        { master: { id: offer.master.id } },
+      );
 
       const newChat = this.chatRepository.create({
         user: { id: userId },

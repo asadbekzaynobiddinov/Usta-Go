@@ -16,8 +16,9 @@ import { UpdatePayoutAccountDto } from './dto/update-payout-account.dto';
 import { UserID } from 'src/common/decorator/user-id.decorator';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { QueryDto } from 'src/common/dto';
+import { MasterGuard } from 'src/common/guard/master.guard';
 
-@UseGuards(JwtGuard)
+@UseGuards(JwtGuard, MasterGuard)
 @Controller('payout-accounts')
 export class PayoutAccountsController {
   constructor(private readonly payoutAccountsService: PayoutAccountsService) {}

@@ -18,12 +18,14 @@ import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { UserID } from 'src/common/decorator/user-id.decorator';
 import { UserROLE } from 'src/common/decorator/user-role.decorator';
 import { QueryDto } from 'src/common/dto';
+import { UserGuard } from 'src/common/guard/user.guard';
 
 @UseGuards(JwtGuard)
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  @UseGuards(UserGuard)
   @Post()
   create(@Body() createOrderDto: CreateOrderDto, @UserID() id: string) {
     return this.ordersService.create({ ...createOrderDto, user_id: id });
@@ -78,6 +80,7 @@ export class OrdersController {
     });
   }
 
+  @UseGuards(UserGuard)
   @Get('offers/:id')
   findAllOffers(
     @Param('id', ParseUUIDPipe) id: string,
@@ -93,6 +96,7 @@ export class OrdersController {
     });
   }
 
+  @UseGuards(UserGuard)
   @HttpCode(200)
   @Post('accept-offer/:id')
   accceptOffer(
@@ -102,12 +106,13 @@ export class OrdersController {
     return this.ordersService.acceptOffer(
       {
         where: { id, order: { user: { id: userId } } },
-        relations: ['master'],
+        relations: ['master', 'order'],
       },
       userId,
     );
   }
 
+  @UseGuards(UserGuard)
   @HttpCode(200)
   @Post('reject-offer/:id')
   rejectOffer(
@@ -119,6 +124,7 @@ export class OrdersController {
     });
   }
 
+  @UseGuards(UserGuard)
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -128,6 +134,7 @@ export class OrdersController {
     return this.ordersService.update(id, updateOrderDto, userId);
   }
 
+  @UseGuards(UserGuard)
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string, @UserID() userId: string) {
     return this.ordersService.remove(id, userId);

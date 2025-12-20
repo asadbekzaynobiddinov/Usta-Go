@@ -11,9 +11,6 @@ export class CreateUserOpinionDto {
   user_id?: string;
 
   @IsUUID()
-  master_id: string;
-
-  @IsUUID()
   order_id: string;
 
   @IsString()

@@ -17,12 +17,14 @@ import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { UserID } from 'src/common/decorator/user-id.decorator';
 import { UserROLE } from 'src/common/decorator/user-role.decorator';
 import { QueryDto } from 'src/common/dto';
+import { MasterGuard } from 'src/common/guard/master.guard';
 
 @UseGuards(JwtGuard)
 @Controller('order-offers')
 export class OrderOffersController {
   constructor(private readonly orderOffersService: OrderOffersService) {}
 
+  @UseGuards(MasterGuard)
   @Post()
   create(
     @Body() createOrderOfferDto: CreateOrderOfferDto,
@@ -77,6 +79,7 @@ export class OrderOffersController {
     });
   }
 
+  @UseGuards(MasterGuard)
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -86,6 +89,7 @@ export class OrderOffersController {
     return this.orderOffersService.update(id, updateOrderOfferDto, userId);
   }
 
+  @UseGuards(MasterGuard)
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string, @UserID() userId: string) {
     return this.orderOffersService.remove(id, userId);

@@ -10,7 +10,7 @@ import { MasterStatus } from 'src/common/enum';
 import { IPayload } from 'src/common/interface';
 import { UpdateMasterProfileDto } from './dto/update-master-profile.dto';
 import { JwtService } from '@nestjs/jwt';
-import { FindManyOptions } from 'typeorm';
+import { FindManyOptions, FindOneOptions } from 'typeorm';
 
 @Injectable()
 export class MasterProfileService {
@@ -47,7 +47,7 @@ export class MasterProfileService {
     };
   }
 
-  async findAll(options?: FindManyOptions<MasterProfile>) {
+  async findAll(options: FindManyOptions<MasterProfile>) {
     const profiles = await this.repository.find(options);
     return {
       status_code: 200,
@@ -56,8 +56,8 @@ export class MasterProfileService {
     };
   }
 
-  async findOneById(id: string) {
-    const profile = await this.repository.findOne({ where: { id } });
+  async findOne(options: FindOneOptions<MasterProfile>) {
+    const profile = await this.repository.findOne(options);
     if (!profile) {
       throw new NotFoundException('Master profile not found');
     }
@@ -69,6 +69,7 @@ export class MasterProfileService {
   }
 
   async update(id: string, dto: UpdateMasterProfileDto) {
+    await this.findOne({ where: { id } });
     await this.repository.update({ id }, { ...dto });
     return {
       status_codecode: 200,
@@ -78,6 +79,7 @@ export class MasterProfileService {
   }
 
   async delete(id: string) {
+    await this.findOne({ where: { id } });
     await this.repository.delete({ id });
     return {
       status_code: 204,
@@ -86,9 +88,11 @@ export class MasterProfileService {
   }
 
   async getToken(id: string) {
-    const masterProfile = await this.repository.findOne({
-      where: { user: { id } },
-    });
+    const masterProfile = (
+      await this.findOne({
+        where: { user: { id } },
+      })
+    ).data;
     if (!masterProfile) {
       throw new NotFoundException('Master Profile not found');
     }

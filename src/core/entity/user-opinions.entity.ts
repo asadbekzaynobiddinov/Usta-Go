@@ -1,4 +1,11 @@
-import { Entity, Column, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
 import { MasterProfile } from './master-profile.entity';
 import { User } from './user.entity';
@@ -24,6 +31,7 @@ export class UserOpinions extends BaseEntity {
   @OneToOne(() => Orders, (order) => order.user_opinion, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn()
   order: Orders;
 
   @OneToMany(() => PicturesOfOpinions, (pictures) => pictures.opinion)

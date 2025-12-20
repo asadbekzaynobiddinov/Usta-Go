@@ -17,8 +17,10 @@ export type ConfigType = {
   SUPER_ADMIN_PASSWORD: string;
   REDIS_HOST: string;
   REDIS_PORT: number;
-  INFOBIP_API: string;
+  MOBIZON_URL: string;
+  MOBIZON_KEY: string;
   INFOBIP_URL: string;
+  INFOBIP_API: string;
 };
 
 export const config: ConfigType = {
@@ -36,6 +38,8 @@ export const config: ConfigType = {
   SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD as string,
   REDIS_HOST: process.env.REDIS_HOST as string,
   REDIS_PORT: parseInt(process.env.REDIS_PORT as string, 10),
-  INFOBIP_API: process.env.INFOBIP_API as string,
+  MOBIZON_KEY: process.env.MOBIZON_KEY as string,
+  MOBIZON_URL: process.env.MOBIZON_URL as string,
   INFOBIP_URL: process.env.INFOBIP_URL as string,
+  INFOBIP_API: process.env.INFOBIP_API as string,
 };

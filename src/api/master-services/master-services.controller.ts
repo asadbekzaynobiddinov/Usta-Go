@@ -15,14 +15,15 @@ import { CreateMasterServiceDto } from './dto/create-master-service.dto';
 import { UpdateMasterServiceDto } from './dto/update-master-service.dto';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { UserID } from 'src/common/decorator/user-id.decorator';
-import { UserROLE } from 'src/common/decorator/user-role.decorator';
-import { QueryDto } from 'src/common/dto';
+import { MasterGuard } from 'src/common/guard/master.guard';
+import { MasterServicesFIndDto } from './dto/find-options.dto';
 
 @UseGuards(JwtGuard)
 @Controller('master-services')
 export class MasterServicesController {
   constructor(private readonly masterServicesService: MasterServicesService) {}
 
+  @UseGuards(MasterGuard)
   @Post()
   create(
     @Body() createMasterServiceDto: CreateMasterServiceDto,
@@ -36,23 +37,14 @@ export class MasterServicesController {
 
   @Get()
   findAll(
-    @UserID() id: string,
-    @UserROLE() role: string,
     @Query()
-    query: QueryDto,
+    query: MasterServicesFIndDto,
   ) {
     const skip = (query.page - 1) * query.limit;
     query.orderBy = 'created_at';
     query.order = 'DESC';
-    if (role === 'admin' || role === 'superAdmin') {
-      return this.masterServicesService.findAll({
-        skip,
-        take: query.limit,
-        order: { [query.orderBy]: query.order },
-      });
-    }
     return this.masterServicesService.findAll({
-      where: { master: { id } },
+      where: { master: { id: query.master_id } },
       skip,
       take: query.limit,
       order: { [query.orderBy]: query.order },
@@ -60,34 +52,24 @@ export class MasterServicesController {
   }
 
   @Get(':id')
-  findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-    @UserID() userId: string,
-    @UserROLE() role: string,
-  ) {
-    if (role === 'admin' || role === 'superAdmin') {
-      return this.masterServicesService.findOne({ where: { id } });
-    }
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.masterServicesService.findOne({
-      where: { id, master: { id: userId } },
+      where: { id },
     });
   }
 
+  @UseGuards(MasterGuard)
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateMasterServiceDto: UpdateMasterServiceDto,
-    @UserID() userId: string,
   ) {
-    return this.masterServicesService.update(
-      id,
-      updateMasterServiceDto,
-      userId,
-    );
+    return this.masterServicesService.update(id, updateMasterServiceDto);
   }
 
+  @UseGuards(MasterGuard)
   @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string, @UserID() userId: string) {
-    return this.masterServicesService.remove(id, userId);
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.masterServicesService.remove(id);
   }
 }

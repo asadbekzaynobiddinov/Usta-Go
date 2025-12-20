@@ -1,9 +1,4 @@
-import { IsUUID, IsString } from 'class-validator';
-
-export class ChatIdDto {
-  @IsUUID()
-  chat_id: string;
-}
+import { IsUUID, IsString, IsArray, IsOptional } from 'class-validator';
 
 export class MessageBodyDto {
   @IsUUID()
@@ -11,4 +6,13 @@ export class MessageBodyDto {
 
   @IsString()
   message: string;
+
+  @IsArray()
+  @IsOptional()
+  pictures?: string[];
+
+  @IsOptional()
+  @IsUUID()
+  @IsString()
+  sender_id?: string;
 }

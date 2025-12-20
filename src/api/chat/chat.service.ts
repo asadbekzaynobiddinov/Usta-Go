@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
-// import { UpdateChatDto } from './dto/update-chat.dto';
 import { ChatRooms, ChatRoomsRepository } from 'src/core';
+import { FindManyOptions } from 'typeorm';
 
 @Injectable()
 export class ChatService {
@@ -23,8 +23,8 @@ export class ChatService {
     };
   }
 
-  async findAll() {
-    const chats = await this.repository.find({});
+  async findAll(options: FindManyOptions<ChatRooms>) {
+    const chats = await this.repository.find(options);
     return {
       status_code: 200,
       message: 'Chat rooms fetched successfully',
