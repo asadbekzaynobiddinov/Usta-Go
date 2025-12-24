@@ -6,6 +6,8 @@ import {
   IsString,
   IsUrl,
   IsUUID,
+  Max,
+  Min,
   ValidateNested,
 } from 'class-validator';
 
@@ -25,6 +27,8 @@ export class UpdateUserOpinionDto {
 
   @IsOptional()
   @IsNumber()
+  @Min(1)
+  @Max(5)
   rating?: number;
 
   @IsOptional()

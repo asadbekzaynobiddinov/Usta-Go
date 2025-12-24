@@ -96,6 +96,11 @@ export class MasterProfileService {
     if (!masterProfile) {
       throw new NotFoundException('Master Profile not found');
     }
+    if (masterProfile.status !== MasterStatus.VERIFIED) {
+      throw new ConflictException(
+        'Master Profile is not verified. Cannot generate token.',
+      );
+    }
     const payload: IPayload = {
       sub: masterProfile.id,
       role: 'master',

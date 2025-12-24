@@ -1,5 +1,5 @@
 import {
-  ConflictException,
+  BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,9 +10,9 @@ import {
   User,
   UserRepository,
 } from 'src/core';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { FindManyOptions } from 'typeorm';
+import { BcryptEncryption } from 'src/infrastructure/lib/bcrypt';
 
 @Injectable()
 export class UserService {
@@ -21,23 +21,6 @@ export class UserService {
     @InjectRepository(Notifications)
     private readonly notificationsRepository: NotificationsRepository,
   ) {}
-  async create(dto: CreateUserDto) {
-    const userExists = await this.repository.findOne({
-      where: { email: dto.email },
-    });
-    if (userExists) {
-      throw new ConflictException('User already exists');
-    }
-
-    const newUser = this.repository.create(dto);
-    await this.repository.save(newUser);
-    return {
-      status_code: 201,
-      message: 'User created succsessfuly',
-      data: newUser,
-    };
-  }
-
   async findAll(options?: FindManyOptions<User>) {
     const users = await this.repository.find(options);
     return {
@@ -65,11 +48,34 @@ export class UserService {
   async update(id: string, dto: UpdateUserDto) {
     await this.findOneById(id);
 
-    await this.repository.update({ id }, { ...dto });
+    const { password, ...updateData } = dto;
+
+    if (password) {
+      const hashedPassword = await BcryptEncryption.encrypt(password);
+      await this.repository.update(
+        { id },
+        { ...updateData, password: hashedPassword },
+      );
+    }
+
+    await this.repository.update({ id }, { ...updateData });
     return {
       status_code: 200,
       message: 'User updated succsessfuly',
-      data: await this.repository.findOneBy({ id }),
+      data: await this.repository.findOne({
+        where: { id },
+        select: [
+          'id',
+          'first_name',
+          'last_name',
+          'phone_number',
+          'password',
+          'language',
+          'account_status',
+          'updated_at',
+          'created_at',
+        ],
+      }),
     };
   }
 

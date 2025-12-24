@@ -50,7 +50,7 @@ export class UserOpinionsService {
       user: { id: order.user.id },
       master: { id: order.master.id },
       order: { id: order.id },
-      comment: dto.coment,
+      comment: dto.comment,
       rating: dto.rating,
     });
 
@@ -108,34 +108,39 @@ export class UserOpinionsService {
   }
 
   async update(id: string, dto: UpdateUserOpinionDto) {
-    const opinion = (
-      await this.findOne({ where: { id }, relations: ['master'] })
-    ).data;
-    const { pictures, rating, ...updateData } = dto;
+    try {
+      const opinion = (
+        await this.findOne({ where: { id }, relations: ['master'] })
+      ).data;
+      const { pictures, rating, ...updateData } = dto;
 
-    await this.repository.update({ id }, { ...updateData, rating });
+      await this.repository.update({ id }, { ...updateData, rating });
 
-    await this.masterRepository.update(
-      {
-        id: opinion.master.id,
-      },
-      {
-        rating_sum: () => `rating_sum - ${opinion.rating} + ${rating}`,
-      },
-    );
+      await this.masterRepository.update(
+        {
+          id: opinion.master.id,
+        },
+        {
+          rating_sum: () => `rating_sum - ${opinion.rating} + ${rating}`,
+        },
+      );
 
-    if (pictures?.length) {
-      for (const pic of pictures) {
-        await this.picturesRepository.update(
-          { id: pic.id },
-          { picture_url: pic.picture_url },
-        );
+      if (pictures?.length) {
+        for (const pic of pictures) {
+          await this.picturesRepository.update(
+            { id: pic.id },
+            { picture_url: pic.picture_url },
+          );
+        }
       }
       return {
         status_code: 200,
         message: 'User opinion updated succsessfuly',
-        data: (await this.findOne({ where: { id } })).data,
+        data: (await this.findOne({ where: { id }, relations: ['master'] }))
+          .data,
       };
+    } catch (error) {
+      console.log(error);
     }
   }
 

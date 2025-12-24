@@ -14,7 +14,9 @@ export class Orders extends BaseEntity {
   })
   user: User;
 
-  @ManyToOne(() => MasterProfile, (master) => master.orders)
+  @ManyToOne(() => MasterProfile, (master) => master.orders, {
+    onDelete: 'SET NULL',
+  })
   master: MasterProfile;
 
   @OneToOne(() => UserOpinions, (op) => op.order)

@@ -101,6 +101,6 @@ export enum PaymentProvider {
 
 export enum UserAccountStatus {
   NOT_FILLED = 'notfilled',
-  FULFILLED = 'fulfilled',
+  FILLED = 'filled',
   VERIFIED = 'verified',
 }

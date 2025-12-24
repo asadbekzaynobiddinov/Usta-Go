@@ -1,8 +1,10 @@
-import { Infobip, AuthType } from '@infobip-api/sdk';
+import { mobizon } from 'mobizon-node';
 import { config } from 'src/config';
 
-export const infobipClient = new Infobip({
-  baseUrl: config.INFOBIP_URL,
-  apiKey: config.INFOBIP_API,
-  authType: AuthType.ApiKey,
+mobizon.setConfig({
+  apiKey: config.MOBIZON_KEY,
+  apiServer: config.MOBIZON_URL,
+  format: 'json',
 });
+
+export default mobizon;

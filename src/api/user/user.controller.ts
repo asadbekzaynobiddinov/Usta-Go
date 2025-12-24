@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   UseGuards,
   Query,
@@ -11,7 +10,6 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { AdminGuard } from 'src/common/guard/admin.guard';
 import { SelfGuard } from 'src/common/guard/self.guard';
@@ -22,12 +20,6 @@ import { QueryDto } from 'src/common/dto';
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
-
-  @UseGuards(AdminGuard)
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
-  }
 
   @UseGuards(AdminGuard)
   @Get()

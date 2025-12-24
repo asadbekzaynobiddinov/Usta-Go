@@ -16,7 +16,7 @@ import { UpdateMasterServiceDto } from './dto/update-master-service.dto';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { UserID } from 'src/common/decorator/user-id.decorator';
 import { MasterGuard } from 'src/common/guard/master.guard';
-import { MasterServicesFIndDto } from './dto/find-options.dto';
+import { MasterServicesFindDto } from './dto/find-options.dto';
 
 @UseGuards(JwtGuard)
 @Controller('master-services')
@@ -38,7 +38,7 @@ export class MasterServicesController {
   @Get()
   findAll(
     @Query()
-    query: MasterServicesFIndDto,
+    query: MasterServicesFindDto,
   ) {
     const skip = (query.page - 1) * query.limit;
     query.orderBy = 'created_at';

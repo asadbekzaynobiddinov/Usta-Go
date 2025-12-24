@@ -4,197 +4,109 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Cache } from 'cache-manager';
 import { User, UserRepository } from 'src/core';
-import { MailService } from './mail.service';
-// import { generateOTP } from 'src/infrastructure/lib/otp-generator/generateOTP';
-// import { BcryptEncryption } from 'src/infrastructure/lib/bcrypt';
-// import { IPayload } from 'src/infrastructure/lib/prompts/types';
 import { JwtService } from '@nestjs/jwt';
-import { IGoogleProfile, IPayload } from 'src/common/interface';
+import { InjectBot } from 'nestjs-telegraf';
+import { Telegraf } from 'telegraf';
 import { config } from 'src/config';
 import { UserAccountStatus } from 'src/common/enum';
 import { generateOTP } from 'src/infrastructure/lib/otp-generator/generateOTP';
-import smsService from '../sms/sms.service';
+import { RegisterDto } from './dto/register.dto';
 import { VerificationCodes } from 'src/core/entity/verificationcodes.entity';
 import { VerificationCodesRepository } from 'src/core/repository/verification-codes.repository';
+import mobizon from 'src/infrastructure/lib/sms-service';
+import { VerifyNumberDto } from './dto/verify-number.dto';
+import { IPayload } from 'src/common/interface';
+import { LoginDto } from './dto/login.dto';
+import { BcryptEncryption } from 'src/infrastructure/lib/bcrypt';
+import { ResendOtpDto } from './dto/resend-otp.dto';
+import { Not } from 'typeorm';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly mail: MailService,
     @InjectRepository(User) private readonly userRepository: UserRepository,
     @InjectRepository(VerificationCodes)
     private readonly codeRepository: VerificationCodesRepository,
     private jwt: JwtService,
+    @InjectBot() private bot: Telegraf,
   ) {}
-  // async register(dto: RegisterDto) {
-  //   const userExists = await this.userRepository.findOne({
-  //     where: { email: dto.email },
-  //   });
+  async register(dto: RegisterDto) {
+    const phoneNumberInUse = await this.userRepository.exists({
+      where: { phone_number: dto.phone_number },
+    });
+    if (phoneNumberInUse) {
+      throw new BadRequestException('Phone number already in use');
+    }
 
-  //   if (userExists) {
-  //     return {
-  //       status_code: 409,
-  //       message: 'This email already taken',
-  //       data: {},
-  //     };
-  //   }
+    const hashedPassword = await BcryptEncryption.encrypt(dto.password);
 
-  //   const newUser = this.userRepository.create({
-  //     ...dto,
-  //     password: await BcryptEncryption.encrypt(dto.password),
-  //   });
+    const newUser = this.userRepository.create({
+      phone_number: dto.phone_number,
+      password: hashedPassword,
+      language: dto.language,
+      account_status: UserAccountStatus.FILLED,
+    });
+    await this.userRepository.save(newUser);
 
-  //   const otpPassword = String(generateOTP());
+    const otpPassword = String(generateOTP());
+    const newVerificationCode = this.codeRepository.create({
+      user: { id: newUser.id },
+      code: Number(otpPassword),
+      valid_until: new Date(Date.now() + 5 * 60 * 1000),
+    });
+    await this.codeRepository.save(newVerificationCode);
 
-  //   await this.cache.set(`confirmation-${newUser.email}`, otpPassword);
+    const response = await mobizon.sendSms({
+      recipient: dto.phone_number,
+      text: `Your OTP code is: ${otpPassword}`,
+      from: '',
+    });
 
-  //   const html = `
-  //     <div style="background:#f4f4f4;padding:20px;font-family:Arial,sans-serif;">
-  //       <div style="max-width:600px;margin:auto;background:#fff;padding:20px;border-radius:8px;">
-  //         <h2 style="color:#007a3d;text-align:center;">UstaGo</h2>
-  //         <p style="font-size:16px;">Assalomu alaykum 👋 ${newUser.email}</p>
-  //         <p>Sizning Tasdiqlash kodingiz: <code><b style="color:#ff5722;">${otpPassword}</b></code></p>
-  //         <p style="font-size:14px;color:#777;">Kod 5 daqiqa amal qiladi</p>
-  //       </div>
-  //     </div>
-  //   `;
+    const { password, ...userData } = newUser;
 
-  //   await this.mail.sendHtmlMail(newUser.email, 'Otp password', html);
+    await this.bot.telegram.sendMessage(
+      config.CHANEL_ID,
+      `New user registered with phone number: <b>${newUser.phone_number}</b>\nVerification code: <code>${otpPassword}</code>`,
+      {
+        parse_mode: 'HTML',
+      },
+    );
 
-  //   await this.userRepository.save(newUser);
+    return {
+      status_code: 201,
+      message: `User registered succsessfuly and sended OTP password to ${newUser.phone_number}`,
+      data: userData,
+    };
+  }
 
-  //   return {
-  //     status_code: 201,
-  //     message: `User created succsessfuly and sended OTP password to ${newUser.email}`,
-  //     data: {},
-  //   };
-  // }
-
-  // async verify(email: string, otp: number) {
-  //   const otpCode: undefined | number = await this.cache.get(
-  //     `confirmation-${email}`,
-  //   );
-  //   console.log({ otpCode, otp });
-  //   if (otpCode === undefined) {
-  //     return {
-  //       status_code: 404,
-  //       message: 'Otp code not found',
-  //       data: {},
-  //     };
-  //   }
-  //   if (otp != otpCode) {
-  //     return {
-  //       status_code: 400,
-  //       message: "Otp code didn't match",
-  //       data: {},
-  //     };
-  //   }
-  //   await this.userRepository.update({ email }, { is_vertfied: true });
-  //   await this.cache.del(`confirmation-${email}`);
-  //   return {
-  //     status_code: 200,
-  //     message: 'User verified successfuly',
-  //     data: {},
-  //   };
-  // }
-
-  // async login(email: string, pass: string) {
-  //   const user = await this.userRepository.findOne({ where: { email } });
-  //   if (!user) {
-  //     return {
-  //       status_code: 404,
-  //       message: 'User not found',
-  //       data: {},
-  //     };
-  //   }
-  //   const passwordsSame = await BcryptEncryption.compare(pass, user.password);
-  //   if (!passwordsSame) {
-  //     return {
-  //       status_code: 401,
-  //       message: "Passwords didn't match",
-  //       data: {},
-  //     };
-  //   }
-  //   if (!user.is_vertfied) {
-  //     return {
-  //       status_code: 403,
-  //       message: 'User not verified',
-  //       data: {},
-  //     };
-  //   }
-  //   const payload: IPayload = {
-  //     sub: user.id,
-  //     email: user.email,
-  //     role: user.role,
-  //   };
-
-  //   const token = this.jwt.sign(payload, {
-  //     secret: config.ACCESS_TOKEN_KEY,
-  //     expiresIn: '30d',
-  //   });
-
-  //   const { password, ...data } = user;
-
-  //   return {
-  //     status_code: 200,
-  //     message: 'Successful login',
-  //     data: {
-  //       token,
-  //       user: {
-  //         ...data,
-  //       },
-  //     },
-  //   };
-  // }
-
-  async googleAuth(googleProfile: IGoogleProfile) {
+  async verifyNumber(dto: VerifyNumberDto) {
+    const otpCode = await this.codeRepository.findOne({
+      where: {
+        code: dto.verification_code,
+        user: { phone_number: dto.phone_number },
+      },
+    });
+    if (!otpCode) {
+      throw new NotFoundException('Verification code not found');
+    }
+    if (otpCode.valid_until < new Date(Date.now())) {
+      throw new BadRequestException('Verification code expired');
+    }
     const user = await this.userRepository.findOne({
-      where: { email: googleProfile.emails[0].value },
-      relations: ['master_profile'],
+      where: { phone_number: dto.phone_number },
     });
     if (!user) {
-      try {
-        const newUser = this.userRepository.create({
-          email: googleProfile.emails[0].value,
-          first_name: googleProfile.name.givenName,
-          last_name: googleProfile.name.familyName,
-          avatar_url: googleProfile.photos[0]?.value,
-          account_status: UserAccountStatus.NOT_FILLED,
-        });
-        await this.userRepository.save(newUser);
-        const payload: IPayload = {
-          sub: newUser.id,
-          role: 'user',
-          userStatus: newUser.account_status,
-        };
-        const token = this.jwt.sign(payload, {
-          secret: config.ACCESS_TOKEN_KEY,
-          expiresIn: '30d',
-        });
-        return {
-          status_code: 201,
-          message: 'User created via Google Auth',
-          data: {
-            token,
-            user: {
-              ...newUser,
-            },
-          },
-        };
-      } catch (error) {
-        console.error('Error creating user via Google Auth:', error);
-        return {
-          status_code: 400,
-          message: 'Error creating user via Google Auth',
-          data: {},
-        };
-      }
+      throw new NotFoundException('User not found');
     }
+    if (user.account_status === UserAccountStatus.VERIFIED) {
+      throw new BadRequestException('User already verified');
+    }
+    user.account_status = UserAccountStatus.VERIFIED;
+    await this.userRepository.save(user);
+    await this.codeRepository.delete({ id: otpCode.id });
     const payload: IPayload = {
       sub: user.id,
-      email: user.email,
       role: 'user',
       userStatus: user.account_status,
     };
@@ -202,48 +114,161 @@ export class AuthService {
       secret: config.ACCESS_TOKEN_KEY,
       expiresIn: '30d',
     });
+    const { password, ...userData } = user;
     return {
       status_code: 200,
-      message: 'Successful login via Google Auth',
+      message: 'Phone number verified successfully',
       data: {
         token,
-        user: {
-          ...user,
-        },
+        user: userData,
       },
     };
   }
 
-  async sendOtp(phone_number: string, userId: string) {
-    const otpCode = generateOTP();
-    const response = await smsService.sendSms({
-      recipient: phone_number,
-      text: `Verification code: ${otpCode}`,
-      from: '',
+  async login(dto: LoginDto) {
+    const user = await this.userRepository.findOne({
+      where: { phone_number: dto.phone_number },
+      relations: ['master_profile'],
     });
-    if (response.code !== 0) {
-      throw new BadRequestException(response.message);
+    if (!user) {
+      throw new BadRequestException('Invalid phone number or password');
     }
-    const newVerificatinCOde = this.codeRepository.create({
-      user: { id: userId },
-      code: otpCode,
-      valid_until: new Date(Date.now() + 5 * 60 * 1000),
+    const passwordsMatch = await BcryptEncryption.compare(
+      dto.password,
+      user.password,
+    );
+    if (!passwordsMatch) {
+      throw new BadRequestException('Invalid phone number or password');
+    }
+    if (user.account_status !== UserAccountStatus.VERIFIED) {
+      throw new BadRequestException('User phone number is not verified');
+    }
+    const payload: IPayload = {
+      sub: user.id,
+      role: 'user',
+      userStatus: user.account_status,
+    };
+    const token = this.jwt.sign(payload, {
+      secret: config.ACCESS_TOKEN_KEY,
+      expiresIn: '30d',
     });
-    await this.codeRepository.save(newVerificatinCOde);
+    const { password, ...userData } = user;
     return {
       status_code: 200,
-      messgae: `Otp code sent to ${phone_number}`,
-      data: newVerificatinCOde,
+      message: 'Login successful',
+      data: {
+        token,
+        user: userData,
+      },
     };
   }
 
-  async verifyNumber(code: number, userId: string) {
-    const otpCode = await this.codeRepository.findOne({
-      where: { code, user: { id: userId } },
+  async resendOtp(dto: ResendOtpDto) {
+    const user = await this.userRepository.findOne({
+      where: {
+        phone_number: dto.phone_number,
+      },
     });
-    if (!otpCode) {
-      throw new NotFoundException('Verification code not found');
+
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
-    console.log(otpCode);
+
+    if (user.account_status === UserAccountStatus.VERIFIED) {
+      throw new BadRequestException('User already verified');
+    }
+
+    const otpPassword = String(generateOTP());
+    const newVerificationCode = this.codeRepository.create({
+      user: { id: user.id },
+      code: Number(otpPassword),
+      valid_until: new Date(Date.now() + 5 * 60 * 1000),
+    });
+    await this.codeRepository.save(newVerificationCode);
+
+    const response = await mobizon.sendSms({
+      recipient: dto.phone_number,
+      text: `Your OTP code is: ${otpPassword}`,
+      from: '',
+    });
+
+    await this.bot.telegram.sendMessage(
+      config.CHANEL_ID,
+      `Resent verification code to user with phone number: <b>${user.phone_number}</b>\nNew Verification code: <code>${otpPassword}</code>`,
+      {
+        parse_mode: 'HTML',
+      },
+    );
+
+    return {
+      status_code: 200,
+      message: `OTP password resent to ${dto.phone_number}`,
+      data: {},
+    };
   }
+
+  // async googleAuth(googleProfile: IGoogleProfile) {
+  //   const user = await this.userRepository.findOne({
+  //     where: { email: googleProfile.emails[0].value },
+  //     relations: ['master_profile'],
+  //   });
+  //   if (!user) {
+  //     try {
+  //       const newUser = this.userRepository.create({
+  //         email: googleProfile.emails[0].value,
+  //         first_name: googleProfile.name.givenName,
+  //         last_name: googleProfile.name.familyName,
+  //         avatar_url: googleProfile.photos[0]?.value,
+  //         account_status: UserAccountStatus.NOT_FILLED,
+  //       });
+  //       await this.userRepository.save(newUser);
+  //       const payload: IPayload = {
+  //         sub: newUser.id,
+  //         role: 'user',
+  //         userStatus: newUser.account_status,
+  //       };
+  //       const token = this.jwt.sign(payload, {
+  //         secret: config.ACCESS_TOKEN_KEY,
+  //         expiresIn: '30d',
+  //       });
+  //       return {
+  //         status_code: 201,
+  //         message: 'User created via Google Auth',
+  //         data: {
+  //           token,
+  //           user: {
+  //             ...newUser,
+  //           },
+  //         },
+  //       };
+  //     } catch (error) {
+  //       console.error('Error creating user via Google Auth:', error);
+  //       return {
+  //         status_code: 400,
+  //         message: 'Error creating user via Google Auth',
+  //         data: {},
+  //       };
+  //     }
+  //   }
+  //   const payload: IPayload = {
+  //     sub: user.id,
+  //     email: user.email,
+  //     role: 'user',
+  //     userStatus: user.account_status,
+  //   };
+  //   const token = this.jwt.sign(payload, {
+  //     secret: config.ACCESS_TOKEN_KEY,
+  //     expiresIn: '30d',
+  //   });
+  //   return {
+  //     status_code: 200,
+  //     message: 'Successful login via Google Auth',
+  //     data: {
+  //       token,
+  //       user: {
+  //         ...user,
+  //       },
+  //     },
+  //   };
+  // }
 }

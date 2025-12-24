@@ -14,7 +14,7 @@ export class CreateUserOpinionDto {
   order_id: string;
 
   @IsString()
-  coment: string;
+  comment: string;
 
   @IsOptional()
   @IsArray()

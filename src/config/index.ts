@@ -21,6 +21,8 @@ export type ConfigType = {
   MOBIZON_KEY: string;
   INFOBIP_URL: string;
   INFOBIP_API: string;
+  BOT_TOKEN: string;
+  CHANEL_ID: string;
 };
 
 export const config: ConfigType = {
@@ -42,4 +44,6 @@ export const config: ConfigType = {
   MOBIZON_URL: process.env.MOBIZON_URL as string,
   INFOBIP_URL: process.env.INFOBIP_URL as string,
   INFOBIP_API: process.env.INFOBIP_API as string,
+  BOT_TOKEN: process.env.BOT_TOKEN as string,
+  CHANEL_ID: process.env.CHANEL_ID as string,
 };
