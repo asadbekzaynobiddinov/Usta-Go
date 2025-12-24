@@ -6,7 +6,7 @@ export type ConfigType = {
   API_PORT: number;
   DB_URL: string;
   ACCESS_TOKEN_KEY: string;
-  ACCESS_TOKEN_TIME: string;
+  REFRESH_TOKEN_KEY: string;
   EMAIL_HOST: string;
   EMAIL_PORT: number;
   EMAIL_USER: string;
@@ -29,7 +29,7 @@ export const config: ConfigType = {
   API_PORT: parseInt(process.env.API_PORT as string, 10),
   DB_URL: process.env.DB_URL as string,
   ACCESS_TOKEN_KEY: process.env.ACCESS_TOKEN_KEY as string,
-  ACCESS_TOKEN_TIME: process.env.ACCESS_TOKEN_TIME as string,
+  REFRESH_TOKEN_KEY: process.env.REFRESH_TOKEN_KEY as string,
   EMAIL_HOST: process.env.EMAIL_HOST as string,
   EMAIL_PORT: parseInt(process.env.EMAIL_PORT as string, 10),
   EMAIL_USER: process.env.EMAIL_USER as string,

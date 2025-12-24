@@ -11,6 +11,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { config } from 'src/config';
 import { VerificationCodes } from 'src/core/entity/verificationcodes.entity';
 import { TelegrafModule } from 'nestjs-telegraf';
+import { RefreshToken } from 'src/core';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { TelegrafModule } from 'nestjs-telegraf';
       token: '8089508975:AAGmANDi55K63ELxGOk1yMKoPW7Nt9YRiyc',
     }),
     PassportModule.register({ defaultStrategy: 'google' }),
-    TypeOrmModule.forFeature([User, VerificationCodes]),
+    TypeOrmModule.forFeature([User, VerificationCodes, RefreshToken]),
     JwtModule.register({ secret: config.ACCESS_TOKEN_KEY }),
   ],
   controllers: [AuthController],

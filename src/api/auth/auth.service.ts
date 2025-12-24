@@ -4,7 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User, UserRepository } from 'src/core';
+import {
+  RefreshToken,
+  RefreshTokenRepository,
+  User,
+  UserRepository,
+} from 'src/core';
 import { JwtService } from '@nestjs/jwt';
 import { InjectBot } from 'nestjs-telegraf';
 import { Telegraf } from 'telegraf';
@@ -19,8 +24,7 @@ import { VerifyNumberDto } from './dto/verify-number.dto';
 import { IPayload } from 'src/common/interface';
 import { LoginDto } from './dto/login.dto';
 import { BcryptEncryption } from 'src/infrastructure/lib/bcrypt';
-import { ResendOtpDto } from './dto/resend-otp.dto';
-import { Not } from 'typeorm';
+import { PhoneNumberDto } from './dto/phone-number.dto';
 
 @Injectable()
 export class AuthService {
@@ -30,6 +34,8 @@ export class AuthService {
     private readonly codeRepository: VerificationCodesRepository,
     private jwt: JwtService,
     @InjectBot() private bot: Telegraf,
+    @InjectRepository(RefreshToken)
+    private readonly tokenRepository: RefreshTokenRepository,
   ) {}
   async register(dto: RegisterDto) {
     const phoneNumberInUse = await this.userRepository.exists({
@@ -110,16 +116,26 @@ export class AuthService {
       role: 'user',
       userStatus: user.account_status,
     };
-    const token = this.jwt.sign(payload, {
+    const accsess_token = this.jwt.sign(payload, {
       secret: config.ACCESS_TOKEN_KEY,
+      expiresIn: '1d',
+    });
+    const refresh_token = this.jwt.sign(payload, {
+      secret: config.REFRESH_TOKEN_KEY,
       expiresIn: '30d',
     });
+    const newRefreshToken = this.tokenRepository.create({
+      user_phone_number: dto.phone_number,
+      token: refresh_token,
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
+    await this.tokenRepository.save(newRefreshToken);
     const { password, ...userData } = user;
     return {
       status_code: 200,
       message: 'Phone number verified successfully',
       data: {
-        token,
+        token: accsess_token,
         user: userData,
       },
     };
@@ -163,7 +179,7 @@ export class AuthService {
     };
   }
 
-  async resendOtp(dto: ResendOtpDto) {
+  async resendOtp(dto: PhoneNumberDto) {
     const user = await this.userRepository.findOne({
       where: {
         phone_number: dto.phone_number,
@@ -192,6 +208,12 @@ export class AuthService {
       from: '',
     });
 
+    if (response.code !== 0) {
+      throw new BadRequestException(
+        'Failed to resend OTP code. Please try again later.',
+      );
+    }
+
     await this.bot.telegram.sendMessage(
       config.CHANEL_ID,
       `Resent verification code to user with phone number: <b>${user.phone_number}</b>\nNew Verification code: <code>${otpPassword}</code>`,
@@ -204,6 +226,69 @@ export class AuthService {
       status_code: 200,
       message: `OTP password resent to ${dto.phone_number}`,
       data: {},
+    };
+  }
+
+  async refreshToken(dto: PhoneNumberDto) {
+    const user = await this.userRepository.findOne({
+      where: {
+        phone_number: dto.phone_number,
+        account_status: UserAccountStatus.VERIFIED,
+      },
+    });
+    if (!user) {
+      throw new NotFoundException(
+        'Verified user with this phone number not found',
+      );
+    }
+    const refreshToken = await this.tokenRepository.findOne({
+      where: {
+        user_phone_number: dto.phone_number,
+      },
+    });
+    if (!refreshToken) {
+      throw new NotFoundException('Refresh token not found');
+    }
+    if (refreshToken.expires_at < new Date(Date.now())) {
+      throw new BadRequestException('Refresh token expired');
+    }
+    const decoded = this.jwt.verify(refreshToken.token, {
+      secret: config.REFRESH_TOKEN_KEY,
+    }) as IPayload;
+
+    const { exp, iat, ...payload } = decoded;
+
+    if (decoded.sub !== user.id) {
+      throw new BadRequestException('Invalid refresh token');
+    }
+
+    await this.tokenRepository.delete({ id: refreshToken.id });
+
+    const refresh_token = this.jwt.sign(payload, {
+      secret: config.REFRESH_TOKEN_KEY,
+      expiresIn: '30d',
+    });
+
+    const newRefreshToken = this.tokenRepository.create({
+      user_phone_number: dto.phone_number,
+      token: refresh_token,
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
+    await this.tokenRepository.save(newRefreshToken);
+
+    const token = this.jwt.sign(payload, {
+      secret: config.ACCESS_TOKEN_KEY,
+      expiresIn: '30d',
+    });
+
+    const { password, ...userData } = user;
+    return {
+      status_code: 200,
+      message: 'Token refreshed successfully',
+      data: {
+        token,
+        user: userData,
+      },
     };
   }
 

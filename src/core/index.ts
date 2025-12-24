@@ -11,6 +11,7 @@ export * from './entity/orders.entity';
 export * from './entity/payment-methods.entity';
 export * from './entity/payout-accounts.entity';
 export * from './entity/pictures-opinions.entity';
+export * from './entity/refresh-token.entity';
 export * from './entity/user-opinions.entity';
 export * from './entity/user.entity';
 
@@ -27,5 +28,6 @@ export * from './repository/orders.repository';
 export * from './repository/payment-methods.repository';
 export * from './repository/payout-accounts.repository';
 export * from './repository/pictures-opinions.repository';
+export * from './repository/refresh-token.repository';
 export * from './repository/user-opinions.repository';
 export * from './repository/user.repository';

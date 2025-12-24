@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { VerifyNumberDto } from './dto/verify-number.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { ResendOtpDto } from './dto/resend-otp.dto';
+import { PhoneNumberDto } from './dto/phone-number.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -24,8 +24,13 @@ export class AuthController {
   }
 
   @Post('resend-otp')
-  resendOtp(@Body() body: ResendOtpDto) {
+  resendOtp(@Body() body: PhoneNumberDto) {
     return this.authService.resendOtp(body);
+  }
+
+  @Post('refresh-token')
+  refreshToken(@Body() body: PhoneNumberDto) {
+    return this.authService.refreshToken(body);
   }
 
   // @Get('google')

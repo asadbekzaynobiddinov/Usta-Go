@@ -1,6 +1,6 @@
 import { IsString, Matches } from 'class-validator';
 
-export class ResendOtpDto {
+export class PhoneNumberDto {
   @IsString()
   @Matches(/^7\d{10}$/, {
     message:
