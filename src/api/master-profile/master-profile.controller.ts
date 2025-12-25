@@ -25,12 +25,6 @@ export class MasterProfileController {
   constructor(private readonly masterProfileService: MasterProfileService) {}
 
   @UseGuards(UserGuard)
-  @Get('get-token')
-  getToken(@UserID() id: string) {
-    return this.masterProfileService.getToken(id);
-  }
-
-  @UseGuards(UserGuard)
   @Post()
   create(
     @Body() createMasterProfileDto: CreateMasterProfileDto,

@@ -3,7 +3,7 @@ import { BaseEntity } from 'src/common/database/BaseEntity';
 
 @Entity()
 export class RefreshToken extends BaseEntity {
-  @Column({ nullable: false })
+  @Column({ nullable: false, unique: true })
   owner_id: string;
 
   @Column({ nullable: false })

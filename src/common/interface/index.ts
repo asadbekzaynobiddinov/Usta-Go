@@ -1,7 +1,10 @@
+import { TokenType } from '../enum';
+
 export interface IPayload {
   sub: string;
   email?: string;
   role?: string;
+  token_type?: TokenType;
   iat?: number;
   exp?: number;
 }

@@ -8,6 +8,11 @@ export enum RoleUser {
   MASTER = 'master',
 }
 
+export enum TokenType {
+  ACCESS = 'access',
+  REFRESH = 'refresh',
+}
+
 export enum CardType {
   VISA = 'visa',
   MASTERCARD = 'mastercard',

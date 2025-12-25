@@ -1,4 +1,4 @@
-import { Controller, Body, Post } from '@nestjs/common';
+import { Controller, Body, Post, HttpCode } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { VerifyNumberDto } from './dto/verify-number.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -14,21 +14,31 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
+  @HttpCode(200)
   @Post('login')
   login(@Body() body: LoginDto) {
     return this.authService.login(body);
   }
 
+  @HttpCode(200)
+  @Post('logout')
+  logout(@Body() body: RefreshTokenDto) {
+    return this.authService.logout(body.refresh_token);
+  }
+
+  @HttpCode(200)
   @Post('verify-number')
   verifyNumber(@Body() body: VerifyNumberDto) {
     return this.authService.verifyNumber(body);
   }
 
+  @HttpCode(200)
   @Post('resend-otp')
   resendOtp(@Body() body: PhoneNumberDto) {
     return this.authService.resendOtp(body);
   }
 
+  @HttpCode(200)
   @Post('refresh-token')
   refreshToken(@Body() body: RefreshTokenDto) {
     return this.authService.refreshToken(body.refresh_token);

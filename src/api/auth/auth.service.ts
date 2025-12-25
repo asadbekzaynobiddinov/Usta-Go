@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -14,7 +15,12 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectBot } from 'nestjs-telegraf';
 import { Telegraf } from 'telegraf';
 import { config } from 'src/config';
-import { UserAccountStatus } from 'src/common/enum';
+import {
+  MasterStatus,
+  RoleUser,
+  TokenType,
+  UserAccountStatus,
+} from 'src/common/enum';
 import { generateOTP } from 'src/infrastructure/lib/otp-generator/generateOTP';
 import { RegisterDto } from './dto/register.dto';
 import { VerificationCodes } from 'src/core/entity/verificationcodes.entity';
@@ -26,6 +32,7 @@ import { LoginDto } from './dto/login.dto';
 import { BcryptEncryption } from 'src/infrastructure/lib/bcrypt';
 import { PhoneNumberDto } from './dto/phone-number.dto';
 import { Not } from 'typeorm';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -46,7 +53,9 @@ export class AuthService {
       throw new BadRequestException('Phone number already in use');
     }
 
-    const hashedPassword = await BcryptEncryption.encrypt(dto.password);
+    const hashedPassword = (await BcryptEncryption.encrypt(
+      dto.password,
+    )) as string;
 
     const newUser = this.userRepository.create({
       phone_number: dto.phone_number,
@@ -120,18 +129,24 @@ export class AuthService {
 
     const payload: IPayload = {
       sub: user.id,
-      role: 'user',
+      role: RoleUser.USER,
     };
 
-    const accsess_token = this.jwt.sign(payload, {
-      secret: config.ACCESS_TOKEN_KEY,
-      expiresIn: '1h',
-    });
+    const accsess_token = this.jwt.sign(
+      { ...payload, token_type: TokenType.ACCESS },
+      {
+        secret: config.ACCESS_TOKEN_KEY,
+        expiresIn: '1h',
+      },
+    );
 
-    const refresh_token = this.jwt.sign(payload, {
-      secret: config.REFRESH_TOKEN_KEY,
-      expiresIn: '30d',
-    });
+    const refresh_token = this.jwt.sign(
+      { ...payload, token_type: TokenType.REFRESH },
+      {
+        secret: config.REFRESH_TOKEN_KEY,
+        expiresIn: '30d',
+      },
+    );
 
     const newRefreshToken = this.tokenRepository.create({
       owner_id: user.id,
@@ -155,60 +170,184 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.userRepository.findOne({
-      where: { phone_number: dto.phone_number },
-      relations: ['master_profile'],
-    });
+    try {
+      const user = await this.userRepository.findOne({
+        where: { phone_number: dto.phone_number },
+        relations: ['master_profile'],
+      });
 
-    if (!user) {
-      throw new BadRequestException('Invalid phone number or password');
+      if (!user) {
+        throw new BadRequestException('Invalid phone number or password');
+      }
+
+      const passwordsMatch = (await BcryptEncryption.compare(
+        dto.password,
+        user.password,
+      )) as boolean;
+
+      if (!passwordsMatch) {
+        throw new BadRequestException('Invalid phone number or password');
+      }
+
+      if (user.account_status !== UserAccountStatus.VERIFIED) {
+        throw new BadRequestException('User phone number is not verified');
+      }
+
+      let master_accsess_token: string | null = null;
+      let master_refresh_token: string | null = null;
+
+      if (
+        user.master_profile &&
+        user.master_profile.status === MasterStatus.VERIFIED
+      ) {
+        const masterPayload: IPayload = {
+          sub: user.master_profile.id,
+          role: RoleUser.MASTER,
+        };
+
+        master_accsess_token = this.jwt.sign(
+          { ...masterPayload, token_type: TokenType.ACCESS },
+          {
+            secret: config.ACCESS_TOKEN_KEY,
+            expiresIn: '1h',
+          },
+        );
+
+        master_refresh_token = this.jwt.sign(
+          { ...masterPayload, token_type: TokenType.REFRESH },
+          {
+            secret: config.REFRESH_TOKEN_KEY,
+            expiresIn: '30d',
+          },
+        );
+
+        const existingToken = await this.tokenRepository.findOne({
+          where: {
+            owner_id: user.master_profile.id,
+          },
+        });
+
+        if (existingToken) {
+          await this.tokenRepository.update(existingToken.id, {
+            token: crypto.hash('sha256', master_refresh_token),
+            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          });
+        } else {
+          await this.tokenRepository.save(
+            this.tokenRepository.create({
+              owner_id: user.master_profile.id,
+              token: crypto.hash('sha256', master_refresh_token),
+              expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            }),
+          );
+        }
+      }
+
+      const userPayload: IPayload = {
+        sub: user.id,
+        role: RoleUser.USER,
+      };
+
+      const user_accsess_token = this.jwt.sign(
+        { ...userPayload, token_type: TokenType.ACCESS },
+        {
+          secret: config.ACCESS_TOKEN_KEY,
+          expiresIn: '1h',
+        },
+      );
+
+      const user_refresh_token = this.jwt.sign(
+        { ...userPayload, token_type: TokenType.REFRESH },
+        {
+          secret: config.REFRESH_TOKEN_KEY,
+          expiresIn: '30d',
+        },
+      );
+
+      const existingToken = await this.tokenRepository.findOne({
+        where: {
+          owner_id: user.id,
+        },
+      });
+
+      if (existingToken) {
+        await this.tokenRepository.update(existingToken.id, {
+          token: crypto.hash('sha256', user_refresh_token),
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        });
+      } else {
+        await this.tokenRepository.save(
+          this.tokenRepository.create({
+            owner_id: user.id,
+            token: crypto.hash('sha256', user_refresh_token),
+            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          }),
+        );
+      }
+
+      const { password, ...userData } = user;
+
+      return {
+        status_code: 200,
+        message: 'Login successful',
+        data: {
+          tokens: {
+            user: {
+              accsess_token: user_accsess_token,
+              refresh_token: user_refresh_token,
+            },
+            master: master_accsess_token
+              ? {
+                  accsess_token: master_accsess_token,
+                  refresh_token: master_refresh_token,
+                }
+              : null,
+          },
+          user: userData,
+        },
+      };
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async logout(token: string) {
+    const decoded: IPayload = this.jwt.decode(token);
+
+    if (!decoded || decoded.token_type !== TokenType.REFRESH) {
+      throw new BadRequestException('Invalid refresh token');
     }
 
-    const passwordsMatch = await BcryptEncryption.compare(
-      dto.password,
-      user.password,
-    );
-
-    if (!passwordsMatch) {
-      throw new BadRequestException('Invalid phone number or password');
-    }
-
-    if (user.account_status !== UserAccountStatus.VERIFIED) {
-      throw new BadRequestException('User phone number is not verified');
-    }
-
-    const payload: IPayload = {
-      sub: user.id,
-      role: 'user',
-    };
-
-    const accsess_token = this.jwt.sign(payload, {
-      secret: config.ACCESS_TOKEN_KEY,
-      expiresIn: '1h',
-    });
-
-    const refresh_token = this.jwt.sign(payload, {
+    const verified: IPayload = this.jwt.verify(token, {
       secret: config.REFRESH_TOKEN_KEY,
-      expiresIn: '30d',
     });
 
-    const newRefreshToken = this.tokenRepository.create({
-      owner_id: user.id,
-      token: (await BcryptEncryption.encrypt(refresh_token)) as string,
-      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    });
-    await this.tokenRepository.save(newRefreshToken);
+    if (!verified) {
+      throw new BadRequestException('Invalid refresh token');
+    }
 
-    const { password, ...userData } = user;
+    const existingToken = await this.tokenRepository.findOne({
+      where: {
+        owner_id: verified.sub,
+      },
+    });
+
+    if (!existingToken) {
+      throw new BadRequestException('Refresh token not found');
+    }
+
+    const tokensMatch = existingToken.token === crypto.hash('sha256', token);
+
+    if (!tokensMatch) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    await this.tokenRepository.delete({ id: existingToken.id });
 
     return {
       status_code: 200,
-      message: 'Login successful',
-      data: {
-        accsess_token,
-        refresh_token,
-        user: userData,
-      },
+      message: 'Logout successful',
+      data: {},
     };
   }
 
@@ -263,51 +402,62 @@ export class AuthService {
   }
 
   async refreshToken(token: string) {
-    const decoded: IPayload = this.jwt.verify(token, {
+    const decoded: IPayload = this.jwt.decode(token);
+
+    if (!decoded || decoded.token_type !== TokenType.REFRESH) {
+      throw new BadRequestException('Invalid refresh token');
+    }
+
+    const verified: IPayload = this.jwt.verify(token, {
       secret: config.REFRESH_TOKEN_KEY,
     });
 
+    if (!verified) {
+      throw new BadRequestException('Invalid refresh token');
+    }
+
     const existingToken = await this.tokenRepository.findOne({
       where: {
-        owner_id: decoded.sub,
+        owner_id: verified.sub,
       },
     });
 
     if (!existingToken) {
-      throw new NotFoundException('Refresh token not found');
+      throw new BadRequestException('Refresh token not found');
     }
 
     if (existingToken.expires_at < new Date(Date.now())) {
-      throw new BadRequestException('Refresh token expired');
+      throw new UnauthorizedException('Refresh token expired');
     }
 
-    const tokensMatch = (await BcryptEncryption.compare(
-      token,
-      existingToken.token,
-    )) as boolean;
+    const tokensMatch = existingToken.token === crypto.hash('sha256', token);
 
     if (!tokensMatch) {
       throw new BadRequestException('Invalid refresh token');
     }
 
     const payload: IPayload = {
-      sub: decoded.sub,
-      role: decoded.role,
+      sub: verified.sub,
+      role: verified.role,
     };
 
-    const accsess_token = this.jwt.sign(payload, {
-      secret: config.ACCESS_TOKEN_KEY,
-      expiresIn: '1h',
-    });
+    const accsess_token = this.jwt.sign(
+      { ...payload, token_type: TokenType.ACCESS },
+      {
+        secret: config.ACCESS_TOKEN_KEY,
+        expiresIn: '1h',
+      },
+    );
 
-    const refresh_token = this.jwt.sign(payload, {
-      secret: config.REFRESH_TOKEN_KEY,
-      expiresIn: '30d',
-    });
+    const refresh_token = this.jwt.sign(
+      { ...payload, token_type: TokenType.REFRESH },
+      {
+        secret: config.REFRESH_TOKEN_KEY,
+        expiresIn: '30d',
+      },
+    );
 
-    existingToken.token = (await BcryptEncryption.encrypt(
-      refresh_token,
-    )) as string;
+    existingToken.token = crypto.hash('sha256', refresh_token);
     existingToken.expires_at = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     await this.tokenRepository.save(existingToken);
 
