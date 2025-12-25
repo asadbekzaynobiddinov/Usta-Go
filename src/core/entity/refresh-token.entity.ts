@@ -4,7 +4,7 @@ import { BaseEntity } from 'src/common/database/BaseEntity';
 @Entity()
 export class RefreshToken extends BaseEntity {
   @Column({ nullable: false })
-  user_phone_number: string;
+  owner_id: string;
 
   @Column({ nullable: false })
   token: string;

@@ -4,6 +4,7 @@ import { VerifyNumberDto } from './dto/verify-number.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { PhoneNumberDto } from './dto/phone-number.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -29,8 +30,8 @@ export class AuthController {
   }
 
   @Post('refresh-token')
-  refreshToken(@Body() body: PhoneNumberDto) {
-    return this.authService.refreshToken(body);
+  refreshToken(@Body() body: RefreshTokenDto) {
+    return this.authService.refreshToken(body.refresh_token);
   }
 
   // @Get('google')

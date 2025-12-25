@@ -3,15 +3,16 @@ import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MasterProfileService } from './master-profile.service';
 import { MasterProfileController } from './master-profile.controller';
-import { MasterProfile, User } from 'src/core';
+import { MasterProfile, RefreshToken, User } from 'src/core';
 import { config } from 'src/config';
+import { BcryptEncryption } from 'src/infrastructure/lib/bcrypt';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, MasterProfile]),
+    TypeOrmModule.forFeature([User, MasterProfile, RefreshToken]),
     JwtModule.register({ secret: config.ACCESS_TOKEN_KEY }),
   ],
   controllers: [MasterProfileController],
-  providers: [MasterProfileService],
+  providers: [MasterProfileService, BcryptEncryption],
 })
 export class MasterProfileModule {}

@@ -4,19 +4,28 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateMasterProfileDto } from './dto/create-master-profile.dto';
-import { MasterProfile, MasterProfileRepository } from 'src/core';
+import {
+  MasterProfile,
+  MasterProfileRepository,
+  RefreshToken,
+  RefreshTokenRepository,
+} from 'src/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MasterStatus } from 'src/common/enum';
 import { IPayload } from 'src/common/interface';
 import { UpdateMasterProfileDto } from './dto/update-master-profile.dto';
 import { JwtService } from '@nestjs/jwt';
 import { FindManyOptions, FindOneOptions } from 'typeorm';
+import { BcryptEncryption } from 'src/infrastructure/lib/bcrypt';
+import { config } from 'src/config';
 
 @Injectable()
 export class MasterProfileService {
   constructor(
     @InjectRepository(MasterProfile)
     private readonly repository: MasterProfileRepository,
+    @InjectRepository(RefreshToken)
+    private readonly tokenRepository: RefreshTokenRepository,
     private readonly jwt: JwtService,
   ) {}
   async create(dto: CreateMasterProfileDto) {
@@ -93,25 +102,43 @@ export class MasterProfileService {
         where: { user: { id } },
       })
     ).data;
+
     if (!masterProfile) {
       throw new NotFoundException('Master Profile not found');
     }
+
     if (masterProfile.status !== MasterStatus.VERIFIED) {
       throw new ConflictException(
         'Master Profile is not verified. Cannot generate token.',
       );
     }
+
     const payload: IPayload = {
       sub: masterProfile.id,
       role: 'master',
     };
-    const token = this.jwt.sign(payload, {
+
+    const accsess_token = this.jwt.sign(payload, {
+      secret: config.ACCESS_TOKEN_KEY,
+      expiresIn: '1h',
+    });
+
+    const refresh_token = this.jwt.sign(payload, {
+      secret: config.REFRESH_TOKEN_KEY,
       expiresIn: '30d',
     });
+
+    const newRefreshToken = this.tokenRepository.create({
+      owner_id: masterProfile.id,
+      token: (await BcryptEncryption.encrypt(refresh_token)) as string,
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
+    await this.tokenRepository.save(newRefreshToken);
+
     return {
       status_code: 200,
-      message: 'Login as master was successful',
-      data: { token },
+      message: 'Login as master successful',
+      data: { accsess_token, refresh_token, masterProfile },
     };
   }
 }

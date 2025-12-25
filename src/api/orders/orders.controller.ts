@@ -16,9 +16,9 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { UserID } from 'src/common/decorator/user-id.decorator';
-import { UserROLE } from 'src/common/decorator/user-role.decorator';
 import { QueryDto } from 'src/common/dto';
 import { UserGuard } from 'src/common/guard/user.guard';
+import { OrdersFindOptionsDto } from './dto/find-options.dto';
 
 @UseGuards(JwtGuard)
 @Controller('orders')
@@ -33,50 +33,32 @@ export class OrdersController {
 
   @Get()
   findAll(
-    @UserID() id: string,
-    @UserROLE() role: string,
     @Query()
-    query: QueryDto,
+    query: OrdersFindOptionsDto,
   ) {
-    console.log(query);
     const skip = (query.page - 1) * query.limit;
-    if (role === 'admin' || role === 'superadmin' || role === 'master') {
+    if (query.user_id) {
       return this.ordersService.findAll({
-        skip,
-        take: query.limit,
-        order: { [query.orderBy]: query.order },
-        relations: ['pictures'],
-      });
-    }
-    try {
-      return this.ordersService.findAll({
-        where: { user: { id } },
+        where: { user: { id: query.user_id } },
         skip,
         take: query.limit,
         order: { [query.orderBy]: query.order },
         relations: ['pictures', 'offers', 'offers.master'],
       });
-    } catch (error) {
-      console.log(error);
-      return 'oops';
     }
+    return this.ordersService.findAll({
+      skip,
+      take: query.limit,
+      order: { [query.orderBy]: query.order },
+      relations: ['pictures'],
+    });
   }
 
   @Get(':id')
-  findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-    @UserID() userId: string,
-    @UserROLE() role: string,
-  ) {
-    if (role === 'admin' || role === 'superadmin') {
-      return this.ordersService.findOne({
-        where: { id },
-        relations: ['pictures', 'offers', 'offers.master'],
-      });
-    }
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.ordersService.findOne({
-      where: { id, user: { id: userId } },
-      relations: ['pictures'],
+      where: { id },
+      relations: ['pictures', 'offers', 'offers.master'],
     });
   }
 

@@ -55,6 +55,7 @@ export class MasterServicesController {
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.masterServicesService.findOne({
       where: { id },
+      relations: ['master'],
     });
   }
 
