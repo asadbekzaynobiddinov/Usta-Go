@@ -4,6 +4,7 @@
 import { JwtService } from '@nestjs/jwt';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { MySocket } from '../types';
+import { IPayload } from '../interface';
 
 @Injectable()
 export class JwtSocketMiddleware {
@@ -18,13 +19,13 @@ export class JwtSocketMiddleware {
         return next(new UnauthorizedException('No token provided'));
       }
 
-      const bearer = auth.split(' ')[0];
-      const token = auth.split(' ')[1];
+      const bearer: string = auth.split(' ')[0];
+      const token: string = auth.split(' ')[1];
       if (bearer !== 'Bearer' || !token) {
         throw new UnauthorizedException('Unauthorizated');
       }
 
-      const decoded = this.jwtService.verify(token as string);
+      const decoded: IPayload = this.jwtService.verify(token);
 
       client.user = decoded;
 

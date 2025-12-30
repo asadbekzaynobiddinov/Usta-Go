@@ -27,6 +27,7 @@ export class ChatController {
     console.log(userRole);
     if (userRole === 'admin' || userRole === 'superadmin') {
       return this.chatService.findAll({
+        relations: ['master', 'user'],
         skip,
         take: query.limit,
         order: { [query.orderBy]: query.order },
@@ -34,6 +35,7 @@ export class ChatController {
     } else if (userRole === 'user') {
       return this.chatService.findAll({
         where: { user: { id: userId } },
+        relations: ['master'],
         skip,
         take: query.limit,
         order: { [query.orderBy]: query.order },
@@ -41,6 +43,7 @@ export class ChatController {
     } else if (userRole === 'master') {
       return this.chatService.findAll({
         where: { master: { id: userId } },
+        relations: ['user'],
         skip,
         take: query.limit,
         order: { [query.orderBy]: query.order },

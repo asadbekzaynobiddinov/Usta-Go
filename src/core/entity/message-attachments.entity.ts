@@ -13,7 +13,4 @@ export class MessageAttachments extends BaseEntity {
 
   @Column({ nullable: false, type: 'enum', enum: FileType })
   type: FileType;
-
-  @Column({ nullable: false, type: 'int' })
-  file_size: number;
 }

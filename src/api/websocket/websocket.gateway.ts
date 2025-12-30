@@ -13,9 +13,18 @@ import { Server } from 'socket.io';
 import { Inject } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { JwtSocketMiddleware } from 'src/common/middleware/jwt-socket.middleware';
-import { MessageBodyDto } from './dto';
 import { MySocket } from 'src/common/types';
-import { MessageHandler } from './handlers/message.handler';
+import { MessageBodyDto } from './dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import {
+  ChatRooms,
+  ChatRoomsRepository,
+  MessageAttachments,
+  MessageAttachmentsRepository,
+  Messages,
+  MessagesRepository,
+} from 'src/core';
+import { FileType } from 'src/common/enum';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -28,8 +37,13 @@ export class SocketGateway
 
   constructor(
     private readonly jwtMiddleware: JwtSocketMiddleware,
-    private readonly messageHandler: MessageHandler,
     @Inject('REDIS_CLIENT') private readonly redis: Redis,
+    @InjectRepository(Messages)
+    private readonly messageRepository: MessagesRepository,
+    @InjectRepository(MessageAttachments)
+    private readonly messageAttachmentRepository: MessageAttachmentsRepository,
+    @InjectRepository(ChatRooms)
+    private readonly chatRepository: ChatRoomsRepository,
   ) {}
 
   afterInit() {
@@ -41,24 +55,60 @@ export class SocketGateway
       id: client.id,
       dbId: client.user.sub,
     };
-    await this.redis.hset(`user:${client.user.sub}`, clientData);
+    await this.redis.set(`user:${client.user.sub}`, JSON.stringify(clientData));
   }
 
   async handleDisconnect(client: MySocket) {
     await this.redis.del(`user:${client.user.sub}`);
   }
 
-  @SubscribeMessage('chat:join')
-  onJoinChat(@ConnectedSocket() client: MySocket) {
-    console.log(client.user.sub);
-  }
-
   @SubscribeMessage('message:send')
-  messageSend(
+  async messageSend(
     @MessageBody() body: MessageBodyDto,
     @ConnectedSocket() client: MySocket,
   ) {
-    body.sender_id = client.user.sub;
-    return this.messageHandler.handleSendMessage(body, this.server);
+    try {
+      const chat = await this.chatRepository.findOne({
+        where: { id: body.chat_id },
+        relations: ['master', 'user'],
+      });
+
+      if (!chat) throw new Error('Chat not found');
+
+      const receiverId =
+        chat.master.id === client.user.sub ? chat.user.id : chat.master.id;
+
+      const receiverData = await this.redis.get(`user:${receiverId}`);
+      if (!receiverData) throw new Error('Receiver not found');
+
+      const parsedReceiver = JSON.parse(receiverData);
+
+      const newMessage = await this.messageRepository.save(
+        this.messageRepository.create({
+          chat_room: { id: chat.id },
+          sender_id: client.user.sub,
+          context: body.message,
+        }),
+      );
+
+      const attachments = await Promise.all(
+        (body.pictures ?? []).map((pic) =>
+          this.messageAttachmentRepository.save(
+            this.messageAttachmentRepository.create({
+              message: { id: newMessage.id },
+              type: FileType.IMAGE,
+              file_url: pic,
+            }),
+          ),
+        ),
+      );
+
+      this.server.to(parsedReceiver.id).emit('message:new', {
+        ...newMessage,
+        attachments,
+      });
+    } catch (error) {
+      client.emit('error', { message: error.message });
+    }
   }
 }
