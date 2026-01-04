@@ -10,25 +10,25 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { Inject } from '@nestjs/common';
+import { Inject, UseFilters, UsePipes, ValidationPipe } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { JwtSocketMiddleware } from 'src/common/middleware/jwt-socket.middleware';
 import { MySocket } from 'src/common/types';
-import { MessageBodyDto } from './dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import {
-  ChatRooms,
-  ChatRoomsRepository,
-  MessageAttachments,
-  MessageAttachmentsRepository,
-  Messages,
-  MessagesRepository,
-} from 'src/core';
-import { FileType } from 'src/common/enum';
+import { MessageBodyDto, MessageIdDto, UpdateMessageDto } from './dto';
+import { MessageHandler } from './handlers/message-handler';
+import { WsAllExceptionsFilter } from './filters/ws-exeption.filter';
 
 @WebSocketGateway({
   cors: { origin: '*' },
 })
+@UseFilters(new WsAllExceptionsFilter())
+@UsePipes(
+  new ValidationPipe({
+    transform: true,
+    forbidNonWhitelisted: true,
+    whitelist: true,
+  }),
+)
 export class SocketGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
@@ -38,12 +38,7 @@ export class SocketGateway
   constructor(
     private readonly jwtMiddleware: JwtSocketMiddleware,
     @Inject('REDIS_CLIENT') private readonly redis: Redis,
-    @InjectRepository(Messages)
-    private readonly messageRepository: MessagesRepository,
-    @InjectRepository(MessageAttachments)
-    private readonly messageAttachmentRepository: MessageAttachmentsRepository,
-    @InjectRepository(ChatRooms)
-    private readonly chatRepository: ChatRoomsRepository,
+    private readonly messageHandler: MessageHandler,
   ) {}
 
   afterInit() {
@@ -63,52 +58,50 @@ export class SocketGateway
   }
 
   @SubscribeMessage('message:send')
-  async messageSend(
+  sendMessage(
     @MessageBody() body: MessageBodyDto,
     @ConnectedSocket() client: MySocket,
   ) {
-    try {
-      const chat = await this.chatRepository.findOne({
-        where: { id: body.chat_id },
-        relations: ['master', 'user'],
-      });
+    return this.messageHandler.sendMessage(client, body, this.server);
+  }
 
-      if (!chat) throw new Error('Chat not found');
+  @SubscribeMessage('message:read')
+  readMessage(
+    @MessageBody() body: MessageIdDto,
+    @ConnectedSocket() client: MySocket,
+  ) {
+    return this.messageHandler.readMessage(body.id, client, this.server);
+  }
 
-      const receiverId =
-        chat.master.id === client.user.sub ? chat.user.id : chat.master.id;
+  @SubscribeMessage('message:update')
+  updateMessage(
+    @MessageBody() body: UpdateMessageDto,
+    @ConnectedSocket() client: MySocket,
+  ) {
+    return this.messageHandler.updateMessage(body, client, this.server);
+  }
 
-      const receiverData = await this.redis.get(`user:${receiverId}`);
-      if (!receiverData) throw new Error('Receiver not found');
+  @SubscribeMessage('message:delete')
+  deleteMessage(
+    @MessageBody() body: MessageIdDto,
+    @ConnectedSocket() client: MySocket,
+  ) {
+    return this.messageHandler.deleteMessage(body.id, client, this.server);
+  }
 
-      const parsedReceiver = JSON.parse(receiverData);
+  @SubscribeMessage('start:typing')
+  startTyping(
+    @MessageBody() body: MessageIdDto,
+    @ConnectedSocket() client: MySocket,
+  ) {
+    return this.messageHandler.startTyping(body.id, client, this.server);
+  }
 
-      const newMessage = await this.messageRepository.save(
-        this.messageRepository.create({
-          chat_room: { id: chat.id },
-          sender_id: client.user.sub,
-          context: body.message,
-        }),
-      );
-
-      const attachments = await Promise.all(
-        (body.pictures ?? []).map((pic) =>
-          this.messageAttachmentRepository.save(
-            this.messageAttachmentRepository.create({
-              message: { id: newMessage.id },
-              type: FileType.IMAGE,
-              file_url: pic,
-            }),
-          ),
-        ),
-      );
-
-      this.server.to(parsedReceiver.id).emit('message:new', {
-        ...newMessage,
-        attachments,
-      });
-    } catch (error) {
-      client.emit('error', { message: error.message });
-    }
+  @SubscribeMessage('stop:typing')
+  stopTyping(
+    @MessageBody() body: MessageIdDto,
+    @ConnectedSocket() client: MySocket,
+  ) {
+    return this.messageHandler.stopTyping(body.id, client, this.server);
   }
 }

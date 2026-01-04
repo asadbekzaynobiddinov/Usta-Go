@@ -132,7 +132,7 @@ export class AuthService {
       role: RoleUser.USER,
     };
 
-    const accsess_token = this.jwt.sign(
+    const access_token = this.jwt.sign(
       { ...payload, token_type: TokenType.ACCESS },
       {
         secret: config.ACCESS_TOKEN_KEY,
@@ -162,7 +162,7 @@ export class AuthService {
       status_code: 200,
       message: 'Phone number verified successfully',
       data: {
-        accsess_token,
+        access_token,
         refresh_token,
         user: userData,
       },
@@ -193,7 +193,7 @@ export class AuthService {
         throw new BadRequestException('User phone number is not verified');
       }
 
-      let master_accsess_token: string | null = null;
+      let master_access_token: string | null = null;
       let master_refresh_token: string | null = null;
 
       if (
@@ -205,7 +205,7 @@ export class AuthService {
           role: RoleUser.MASTER,
         };
 
-        master_accsess_token = this.jwt.sign(
+        master_access_token = this.jwt.sign(
           { ...masterPayload, token_type: TokenType.ACCESS },
           {
             secret: config.ACCESS_TOKEN_KEY,
@@ -248,7 +248,7 @@ export class AuthService {
         role: RoleUser.USER,
       };
 
-      const user_accsess_token = this.jwt.sign(
+      const user_access_token = this.jwt.sign(
         { ...userPayload, token_type: TokenType.ACCESS },
         {
           secret: config.ACCESS_TOKEN_KEY,
@@ -293,12 +293,12 @@ export class AuthService {
         data: {
           tokens: {
             user: {
-              accsess_token: user_accsess_token,
+              access_token: user_access_token,
               refresh_token: user_refresh_token,
             },
-            master: master_accsess_token
+            master: master_access_token
               ? {
-                  accsess_token: master_accsess_token,
+                  access_token: master_access_token,
                   refresh_token: master_refresh_token,
                 }
               : null,
@@ -441,7 +441,7 @@ export class AuthService {
       role: verified.role,
     };
 
-    const accsess_token = this.jwt.sign(
+    const access_token = this.jwt.sign(
       { ...payload, token_type: TokenType.ACCESS },
       {
         secret: config.ACCESS_TOKEN_KEY,
@@ -466,7 +466,7 @@ export class AuthService {
       message: 'Token refreshed successfully',
       data: {
         refresh_token,
-        accsess_token,
+        access_token,
       },
     };
   }

@@ -7,6 +7,7 @@ import { config } from 'src/config';
 import { MessagesModule } from '../messages/messages.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ChatRooms, MessageAttachments, Messages } from 'src/core';
+import { MessageHandler } from './handlers/message-handler';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { ChatRooms, MessageAttachments, Messages } from 'src/core';
     JwtModule.register({ secret: config.ACCESS_TOKEN_KEY }),
     TypeOrmModule.forFeature([Messages, ChatRooms, MessageAttachments]),
   ],
-  providers: [SocketGateway, JwtSocketMiddleware],
+  providers: [SocketGateway, JwtSocketMiddleware, MessageHandler],
   exports: [SocketGateway],
 })
 export class WebSocketModule {}

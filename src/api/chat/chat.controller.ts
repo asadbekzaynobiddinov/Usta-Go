@@ -5,6 +5,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
@@ -24,36 +25,45 @@ export class ChatController {
     @Query() query: QueryDto,
   ) {
     const skip = (query.page - 1) * query.limit;
-    console.log(userRole);
-    if (userRole === 'admin' || userRole === 'superadmin') {
-      return this.chatService.findAll({
-        relations: ['master', 'user'],
-        skip,
-        take: query.limit,
-        order: { [query.orderBy]: query.order },
-      });
-    } else if (userRole === 'user') {
-      return this.chatService.findAll({
-        where: { user: { id: userId } },
-        relations: ['master'],
-        skip,
-        take: query.limit,
-        order: { [query.orderBy]: query.order },
-      });
-    } else if (userRole === 'master') {
-      return this.chatService.findAll({
-        where: { master: { id: userId } },
-        relations: ['user'],
-        skip,
-        take: query.limit,
-        order: { [query.orderBy]: query.order },
-      });
+    switch (userRole) {
+      case 'admin':
+      case 'superadmin':
+        return this.chatService.findAll({
+          relations: ['master', 'user', 'last_message'],
+          skip,
+          take: query.limit,
+          order: { [query.orderBy]: query.order },
+        });
+
+      case 'user':
+        return this.chatService.findAll({
+          where: { user: { id: userId } },
+          relations: ['master', 'last_message'],
+          skip,
+          take: query.limit,
+          order: { [query.orderBy]: query.order },
+        });
+
+      case 'master':
+        return this.chatService.findAll({
+          where: { master: { id: userId } },
+          relations: ['user', 'last_message'],
+          skip,
+          take: query.limit,
+          order: { [query.orderBy]: query.order },
+        });
+
+      default:
+        throw new ForbiddenException('Invalid user role');
     }
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.chatService.findOne(id);
+    return this.chatService.findOne({
+      where: { id },
+      relations: ['last_message'],
+    });
   }
 
   @Delete(':id')
