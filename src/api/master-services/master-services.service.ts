@@ -19,7 +19,7 @@ export class MasterServicesService {
     await this.repository.save(newService);
     return {
       status_code: 201,
-      message: 'Master service created succsessfuly',
+      message: 'Master service created successfuly',
       data: newService,
     };
   }
@@ -28,7 +28,7 @@ export class MasterServicesService {
     const services = await this.repository.find(options);
     return {
       status_code: 200,
-      message: 'Master services fetched succsessfuly',
+      message: 'Master services fetched successfuly',
       data: services,
     };
   }
@@ -40,7 +40,7 @@ export class MasterServicesService {
     }
     return {
       status_code: 200,
-      message: 'Master service fetched succsessfuly',
+      message: 'Master service fetched successfuly',
       data: service,
     };
   }
@@ -50,7 +50,7 @@ export class MasterServicesService {
     await this.repository.update({ id }, { ...dto });
     return {
       status_code: 200,
-      message: 'Master service updated succsessfuly',
+      message: 'Master service updated successfuly',
       data: (await this.findOne({ where: { id } })).data,
     };
   }
@@ -64,7 +64,7 @@ export class MasterServicesService {
     }
     return {
       status_code: 200,
-      message: 'Master service deleted succsessfuly',
+      message: 'Master service deleted successfuly',
       data: {},
     };
   }

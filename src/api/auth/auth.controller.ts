@@ -9,6 +9,7 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+  @HttpCode(200)
   @Post('register')
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);

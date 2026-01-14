@@ -31,8 +31,8 @@ export class MasterProfile extends BaseEntity {
   @Column({ nullable: false, type: 'enum', enum: MasterGender })
   gender: MasterGender;
 
-  @Column({ nullable: false })
-  occupation: string;
+  @Column({ nullable: false, type: 'simple-array', default: [] })
+  occupations: string[];
 
   @Column({ nullable: true, type: 'int' })
   experience: number;

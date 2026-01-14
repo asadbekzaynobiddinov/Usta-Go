@@ -1,13 +1,13 @@
 import {
   IsOptional,
   IsString,
-  IsNumber,
   IsEnum,
   IsObject,
   IsInt,
+  IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { MasterGender, MasterStatus } from 'src/common/enum';
+import { MasterGender } from 'src/common/enum';
 
 export class UpdateMasterProfileDto {
   @IsOptional()
@@ -15,17 +15,12 @@ export class UpdateMasterProfileDto {
   bio?: string;
 
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  wallet?: number;
-
-  @IsOptional()
   @IsEnum(MasterGender)
   gender?: MasterGender;
 
   @IsOptional()
-  @IsString()
-  occupation?: string;
+  @IsArray()
+  occupations?: string[];
 
   @IsOptional()
   @IsInt()
@@ -41,16 +36,6 @@ export class UpdateMasterProfileDto {
   selfie_image_url?: string;
 
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  rating_avg?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Type(() => Number)
-  rating_count?: number;
-
-  @IsOptional()
   @IsObject()
   address?: {
     country?: string;
@@ -62,11 +47,4 @@ export class UpdateMasterProfileDto {
     coordinates?: { lat: number; lng: number };
     accuracy?: number;
   };
-
-  @IsOptional()
-  @IsEnum(MasterStatus)
-  status?: MasterStatus;
-
-  @IsOptional()
-  rating_sum?: number;
 }

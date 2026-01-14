@@ -1,12 +1,19 @@
-import { IsString, IsEnum, IsUrl, IsOptional, IsInt } from 'class-validator';
+import {
+  IsString,
+  IsEnum,
+  IsUrl,
+  IsOptional,
+  IsInt,
+  IsArray,
+} from 'class-validator';
 import { MasterGender, MasterStatus } from 'src/common/enum';
 
 export class CreateMasterProfileDto {
   @IsEnum(MasterGender, { message: 'Gender shoud be "male" or "female"' })
   gender: MasterGender;
 
-  @IsString()
-  occupation: string;
+  @IsArray()
+  occupations: string[];
 
   @IsUrl()
   passport_image_url: string;

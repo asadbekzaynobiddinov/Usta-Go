@@ -1,8 +1,5 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Notifications,
@@ -84,8 +81,9 @@ export class UserService {
 
     await this.repository.delete({ id });
     return {
-      status_code: 204,
+      status_code: 200,
       message: 'User deleted succsessfuly',
+      data: {},
     };
   }
 }

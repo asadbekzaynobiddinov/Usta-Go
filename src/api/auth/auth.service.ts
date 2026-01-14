@@ -92,7 +92,9 @@ export class AuthService {
     return {
       status_code: 201,
       message: `User registered succsessfuly and sended OTP password to ${newUser.phone_number}`,
-      data: userData,
+      data: {
+        verificationCode: newVerificationCode,
+      },
     };
   }
 
@@ -136,7 +138,7 @@ export class AuthService {
       { ...payload, token_type: TokenType.ACCESS },
       {
         secret: config.ACCESS_TOKEN_KEY,
-        expiresIn: '1h',
+        expiresIn: '30d',
       },
     );
 
@@ -170,94 +172,50 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    try {
-      const user = await this.userRepository.findOne({
-        where: { phone_number: dto.phone_number },
-        relations: ['master_profile'],
-      });
+    const user = await this.userRepository.findOne({
+      where: { phone_number: dto.phone_number },
+      relations: ['master_profile'],
+    });
 
-      if (!user) {
-        throw new BadRequestException('Invalid phone number or password');
-      }
+    if (!user) {
+      throw new BadRequestException('Invalid phone number or password');
+    }
 
-      const passwordsMatch = (await BcryptEncryption.compare(
-        dto.password,
-        user.password,
-      )) as boolean;
+    const passwordsMatch = (await BcryptEncryption.compare(
+      dto.password,
+      user.password,
+    )) as boolean;
 
-      if (!passwordsMatch) {
-        throw new BadRequestException('Invalid phone number or password');
-      }
+    if (!passwordsMatch) {
+      throw new BadRequestException('Invalid phone number or password');
+    }
 
-      if (user.account_status !== UserAccountStatus.VERIFIED) {
-        throw new BadRequestException('User phone number is not verified');
-      }
+    if (user.account_status !== UserAccountStatus.VERIFIED) {
+      throw new BadRequestException('User phone number is not verified');
+    }
 
-      let master_access_token: string | null = null;
-      let master_refresh_token: string | null = null;
+    let master_access_token: string | null = null;
+    let master_refresh_token: string | null = null;
 
-      if (
-        user.master_profile &&
-        user.master_profile.status === MasterStatus.VERIFIED
-      ) {
-        const masterPayload: IPayload = {
-          sub: user.master_profile.id,
-          role: RoleUser.MASTER,
-        };
-
-        master_access_token = this.jwt.sign(
-          { ...masterPayload, token_type: TokenType.ACCESS },
-          {
-            secret: config.ACCESS_TOKEN_KEY,
-            expiresIn: '1h',
-          },
-        );
-
-        master_refresh_token = this.jwt.sign(
-          { ...masterPayload, token_type: TokenType.REFRESH },
-          {
-            secret: config.REFRESH_TOKEN_KEY,
-            expiresIn: '30d',
-          },
-        );
-
-        const existingToken = await this.tokenRepository.findOne({
-          where: {
-            owner_id: user.master_profile.id,
-          },
-        });
-
-        if (existingToken) {
-          await this.tokenRepository.update(existingToken.id, {
-            token: crypto.hash('sha256', master_refresh_token),
-            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          });
-        } else {
-          await this.tokenRepository.save(
-            this.tokenRepository.create({
-              owner_id: user.master_profile.id,
-              token: crypto.hash('sha256', master_refresh_token),
-              expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-            }),
-          );
-        }
-      }
-
-      const userPayload: IPayload = {
-        sub: user.id,
-        role: RoleUser.USER,
+    if (
+      user.master_profile &&
+      user.master_profile.status === MasterStatus.VERIFIED
+    ) {
+      const masterPayload: IPayload = {
+        sub: user.master_profile.id,
+        role: RoleUser.MASTER,
       };
 
-      const user_access_token = this.jwt.sign(
-        { ...userPayload, token_type: TokenType.ACCESS },
+      master_access_token = this.jwt.sign(
+        { ...masterPayload, token_type: TokenType.ACCESS },
         {
           secret: config.ACCESS_TOKEN_KEY,
-          expiresIn: '1h',
+          expiresIn: '30d',
         },
       );
 
-      const user_refresh_token = this.jwt.sign(
-        { ...userPayload, token_type: TokenType.REFRESH },
+      master_refresh_token = this.jwt.sign(
+        { ...masterPayload, token_type: TokenType.REFRESH },
         {
           secret: config.REFRESH_TOKEN_KEY,
           expiresIn: '30d',
@@ -266,49 +224,89 @@ export class AuthService {
 
       const existingToken = await this.tokenRepository.findOne({
         where: {
-          owner_id: user.id,
+          owner_id: user.master_profile.id,
         },
       });
 
       if (existingToken) {
         await this.tokenRepository.update(existingToken.id, {
-          token: crypto.hash('sha256', user_refresh_token),
+          token: crypto.hash('sha256', master_refresh_token),
           expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         });
       } else {
         await this.tokenRepository.save(
           this.tokenRepository.create({
-            owner_id: user.id,
-            token: crypto.hash('sha256', user_refresh_token),
+            owner_id: user.master_profile.id,
+            token: crypto.hash('sha256', master_refresh_token),
             expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
           }),
         );
       }
-
-      const { password, ...userData } = user;
-
-      return {
-        status_code: 200,
-        message: 'Login successful',
-        data: {
-          tokens: {
-            user: {
-              access_token: user_access_token,
-              refresh_token: user_refresh_token,
-            },
-            master: master_access_token
-              ? {
-                  access_token: master_access_token,
-                  refresh_token: master_refresh_token,
-                }
-              : null,
-          },
-          user: userData,
-        },
-      };
-    } catch (error) {
-      console.log(error);
     }
+
+    const userPayload: IPayload = {
+      sub: user.id,
+      role: RoleUser.USER,
+    };
+
+    const user_access_token = this.jwt.sign(
+      { ...userPayload, token_type: TokenType.ACCESS },
+      {
+        secret: config.ACCESS_TOKEN_KEY,
+        expiresIn: '30d',
+      },
+    );
+
+    const user_refresh_token = this.jwt.sign(
+      { ...userPayload, token_type: TokenType.REFRESH },
+      {
+        secret: config.REFRESH_TOKEN_KEY,
+        expiresIn: '30d',
+      },
+    );
+
+    const existingToken = await this.tokenRepository.findOne({
+      where: {
+        owner_id: user.id,
+      },
+    });
+
+    if (existingToken) {
+      await this.tokenRepository.update(existingToken.id, {
+        token: crypto.hash('sha256', user_refresh_token),
+        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      });
+    } else {
+      await this.tokenRepository.save(
+        this.tokenRepository.create({
+          owner_id: user.id,
+          token: crypto.hash('sha256', user_refresh_token),
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        }),
+      );
+    }
+
+    const { password, ...userData } = user;
+
+    return {
+      status_code: 200,
+      message: 'Login successful',
+      data: {
+        tokens: {
+          user: {
+            access_token: user_access_token,
+            refresh_token: user_refresh_token,
+          },
+          master: master_access_token
+            ? {
+                access_token: master_access_token,
+                refresh_token: master_refresh_token,
+              }
+            : null,
+        },
+        user: userData,
+      },
+    };
   }
 
   async logout(token: string) {
@@ -445,7 +443,7 @@ export class AuthService {
       { ...payload, token_type: TokenType.ACCESS },
       {
         secret: config.ACCESS_TOKEN_KEY,
-        expiresIn: '1h',
+        expiresIn: '30d',
       },
     );
 

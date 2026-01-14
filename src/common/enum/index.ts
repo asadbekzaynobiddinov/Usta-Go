@@ -19,9 +19,9 @@ export enum CardType {
 }
 
 export enum UserLang {
-  RU = 'russian',
-  KZ = 'kazakh',
-  UZ = 'uzbek',
+  RU = 'ru',
+  KZ = 'kaz',
+  UZ = 'uz',
 }
 
 export enum MasterGender {

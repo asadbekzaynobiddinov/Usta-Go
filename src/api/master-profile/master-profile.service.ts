@@ -4,29 +4,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateMasterProfileDto } from './dto/create-master-profile.dto';
-import {
-  MasterProfile,
-  MasterProfileRepository,
-  RefreshToken,
-  RefreshTokenRepository,
-} from 'src/core';
+import { MasterProfile, MasterProfileRepository } from 'src/core';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MasterStatus } from 'src/common/enum';
-import { IPayload } from 'src/common/interface';
+import { MasterStatus, OrderStatus } from 'src/common/enum';
 import { UpdateMasterProfileDto } from './dto/update-master-profile.dto';
-import { JwtService } from '@nestjs/jwt';
-import { FindManyOptions, FindOneOptions } from 'typeorm';
-import { BcryptEncryption } from 'src/infrastructure/lib/bcrypt';
-import { config } from 'src/config';
+import { QueryDto } from 'src/common/dto';
 
 @Injectable()
 export class MasterProfileService {
   constructor(
     @InjectRepository(MasterProfile)
     private readonly repository: MasterProfileRepository,
-    @InjectRepository(RefreshToken)
-    private readonly tokenRepository: RefreshTokenRepository,
-    private readonly jwt: JwtService,
   ) {}
   async create(dto: CreateMasterProfileDto) {
     const profileExists = await this.repository.findOne({
@@ -40,7 +28,7 @@ export class MasterProfileService {
 
     const newProfile = this.repository.create({
       user: { id: dto.user_id },
-      occupation: dto.occupation,
+      occupations: [...dto.occupations],
       gender: dto.gender,
       passport_image_url: dto.passport_image_url,
       selfie_image_url: dto.selfie_image_url,
@@ -56,43 +44,124 @@ export class MasterProfileService {
     };
   }
 
-  async findAll(options: FindManyOptions<MasterProfile>) {
-    const profiles = await this.repository.find(options);
-    return {
-      status_code: 200,
-      message: 'Master profiles fetched succsessfuly',
-      data: profiles,
-    };
+  async findAll(query: QueryDto) {
+    const skip = (query.page - 1) * query.limit;
+
+    try {
+      const profiles = await this.repository
+        .createQueryBuilder('master')
+        .leftJoin('master.user', 'user')
+        .addSelect(['user.first_name', 'user.last_name'])
+        .loadRelationCountAndMap(
+          'master.completedOrdersCount',
+          'master.orders',
+          'orders',
+          (qb) =>
+            qb.where('orders.status = :status', {
+              status: OrderStatus.COMPLETED,
+            }),
+        )
+        .loadRelationCountAndMap(
+          'master.userOpinionsCount',
+          'master.user_opinions',
+          'opinions',
+        )
+        .where('master.status = :status', { status: MasterStatus.VERIFIED })
+        .leftJoinAndSelect('master.services', 'services')
+        .orderBy(`master.${query.orderBy}`, `${query.order}`)
+        .skip(skip)
+        .take(query.limit)
+        .getMany();
+
+      return {
+        status_code: 200,
+        message: 'Master profiles fetched successfully',
+        data: profiles,
+      };
+    } catch (error) {
+      console.log(error);
+    }
   }
 
-  async findOne(options: FindOneOptions<MasterProfile>) {
-    const profile = await this.repository.findOne(options);
+  async findOne(id: string) {
+    const profile = await this.repository
+      .createQueryBuilder('master')
+      .select([
+        'master.id',
+        'master.bio',
+        'master.gender',
+        'master.occupations',
+        'master.experience',
+        'master.rating_sum',
+        'master.rating_count',
+        'master.address',
+      ])
+      .leftJoin('master.user', 'user')
+      .addSelect(['user.first_name', 'user.last_name'])
+      .leftJoinAndSelect('master.services', 'services')
+      .leftJoinAndSelect(
+        'master.orders',
+        'orders',
+        'orders.status = :orderStatus',
+        {
+          orderStatus: OrderStatus.COMPLETED,
+        },
+      )
+      .leftJoinAndSelect('master.user_opinions', 'user_opinions')
+      .where('master.id = :id', { id })
+      .andWhere('master.status = :status', { status: MasterStatus.VERIFIED })
+      .getOne();
+
     if (!profile) {
       throw new NotFoundException('Master profile not found');
     }
+
     return {
       status_code: 200,
-      message: 'Master profile fetched succsessfuly',
+      message: 'Master profile fetched successfully',
+      data: profile,
+    };
+  }
+
+  async getMe(id: string) {
+    const profile = await this.repository.findOne({ where: { id } });
+    if (!profile) {
+      throw new NotFoundException('Profile not found');
+    }
+    return {
+      status_code: 200,
+      message: 'Master profile fetched successfuly',
       data: profile,
     };
   }
 
   async update(id: string, dto: UpdateMasterProfileDto) {
-    await this.findOne({ where: { id } });
+    await this.findOne(id);
     await this.repository.update({ id }, { ...dto });
     return {
       status_codecode: 200,
-      message: 'Profile updated succsessfuly',
+      message: 'Profile updated successfuly',
       data: await this.repository.findOneBy({ id }),
     };
   }
 
   async delete(id: string) {
-    await this.findOne({ where: { id } });
+    await this.findOne(id);
     await this.repository.delete({ id });
     return {
-      status_code: 204,
-      message: 'Profile deleted succsessfuly',
+      status_code: 200,
+      message: 'Profile deleted successfuly',
+      data: {},
+    };
+  }
+
+  async verify(id: string) {
+    await this.findOne(id);
+    await this.repository.update({ id }, { status: MasterStatus.VERIFIED });
+    return {
+      status_code: 200,
+      message: 'Master profile verified successfuly',
+      data: {},
     };
   }
 }
