@@ -2,50 +2,53 @@ name: CI/CD
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      - uses: actions/setup-node@v4
         with:
-          node-version: '23'
+          node-version: 20
+          cache: 'pnpm'
 
-      - name: Install pnpm
-        run: npm i -g pnpm
+      - name: Enable pnpm
+        run: corepack enable
 
-      - name: Dependencies
-        run: pnpm i
+      - name: Install deps
+        run: pnpm install
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Deploy to server
         run: |
           echo "${{ secrets.KEY }}" > private_key.pem
           chmod 600 private_key.pem
+
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.USER }}@${{ secrets.HOST }} << 'EOF'
-          export PATH=/home/bitnami/.nvm/versions/node/v23.10.0/bin:$PATH
-          cd Usta-Go 
-          npx pm2 delete UstaGo
+          export NVM_DIR="$HOME/.nvm"
+          source "$NVM_DIR/nvm.sh"
+
+          cd Usta-Go
+
+          pm2 delete UstaGo || true
+
           git pull origin main
-          npm i pnpm 
-          pnpm i
+
+          npm install -g pnpm
+
+          pnpm install
           pnpm run build
-          npx pm2 start dist/main.js --name UstaGo
+
+          pm2 start dist/main.js --name UstaGo
+          pm2 save
           EOF
-      
