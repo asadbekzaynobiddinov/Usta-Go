@@ -99,6 +99,7 @@ export class MasterProfileService {
       .leftJoin('master.user', 'user')
       .addSelect(['user.first_name', 'user.last_name'])
       .leftJoinAndSelect('master.services', 'services')
+      .leftJoinAndSelect('services.pictures', 'pictures')
       .leftJoinAndSelect(
         'master.orders',
         'orders',
@@ -107,6 +108,7 @@ export class MasterProfileService {
           orderStatus: OrderStatus.COMPLETED,
         },
       )
+      .leftJoinAndSelect('orders.pictures', 'pictures')
       .leftJoinAndSelect('master.user_opinions', 'user_opinions')
       .where('master.id = :id', { id })
       .andWhere('master.status = :status', { status: MasterStatus.VERIFIED })

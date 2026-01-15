@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateMasterServiceDto {
   @IsString()
@@ -10,6 +10,10 @@ export class CreateMasterServiceDto {
   @IsOptional()
   @IsString()
   description: string;
+
+  @IsOptional()
+  @IsArray()
+  pictures: string[];
 
   @IsOptional()
   master_id: string;

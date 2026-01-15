@@ -1,6 +1,33 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateMasterServiceDto } from './create-master-service.dto';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 
-export class UpdateMasterServiceDto extends PartialType(
-  CreateMasterServiceDto,
-) {}
+class PictureUpdateDto {
+  @IsOptional()
+  @IsUUID()
+  id: string;
+
+  @IsUrl()
+  picture_url: string;
+}
+
+export class UpdateMasterServiceDto {
+  @IsString()
+  title: string;
+
+  @IsNumber()
+  price: number;
+
+  @IsOptional()
+  @IsString()
+  description: string;
+
+  @IsOptional()
+  @ValidateNested()
+  pictures?: PictureUpdateDto[];
+}

@@ -1,6 +1,7 @@
-import { Entity, Column, ManyToOne } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
 import { MasterProfile } from './master-profile.entity';
+import { PicturesOfMasterServices } from './pictures-master-services.entity';
 
 @Entity()
 export class MasterServices extends BaseEntity {
@@ -12,6 +13,9 @@ export class MasterServices extends BaseEntity {
 
   @Column({ nullable: true, type: 'text' })
   description: string;
+
+  @OneToMany(() => PicturesOfMasterServices, (pictures) => pictures.service)
+  pictures: PicturesOfMasterServices;
 
   @ManyToOne(() => MasterProfile, (master) => master.services, {
     onDelete: 'CASCADE',

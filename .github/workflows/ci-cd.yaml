@@ -1,0 +1,51 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '23'
+
+      - name: Install pnpm
+        run: npm i -g pnpm
+
+      - name: Dependencies
+        run: pnpm i
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Deploy to server
+        run: |
+          echo "${{ secrets.KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.USER }}@${{ secrets.HOST }} << 'EOF'
+          export PATH=/home/bitnami/.nvm/versions/node/v23.10.0/bin:$PATH
+          cd Usta-Go 
+          npx pm2 delete UstaGo
+          git pull origin main
+          npm i -g pnpm 
+          pnpm i
+          pnpm run build
+          npx pm2 start dist/main.js --name UstaGo
+          EOF
+      
