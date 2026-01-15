@@ -43,7 +43,7 @@ jobs:
           cd Usta-Go 
           npx pm2 delete UstaGo
           git pull origin main
-          npm i -g pnpm 
+          npm i pnpm 
           pnpm i
           pnpm run build
           npx pm2 start dist/main.js --name UstaGo
