@@ -52,8 +52,8 @@ jobs:
 
           git pull origin main
 
-          npm install
-          npm run build
+          npm install -g pnpm
+          pnpm run build
 
           pm2 start dist/main.js --name UstaGo
           pm2 save
