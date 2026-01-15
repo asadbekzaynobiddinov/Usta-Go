@@ -38,14 +38,25 @@ jobs:
         run: |
           echo "${{ secrets.KEY }}" > private_key.pem
           chmod 600 private_key.pem
+
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.USER }}@${{ secrets.HOST }} << 'EOF'
-          export PATH=/home/bitnami/.nvm/versions/node/v23.10.0/bin:$PATH
-          cd Usta-Go 
-          npx pm2 delete UstaGo
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+          node -v
+          npm -v
+
+          cd Usta-Go
+
+          pm2 delete UstaGo || true
+
           git pull origin main
-          npm i -g pnpm 
-          pnpm i
-          pnpm run build
-          npx pm2 start dist/main.js --name UstaGo
+
+          npm install
+          npm run build
+
+          pm2 start dist/main.js --name UstaGo
+          pm2 save
           EOF
-      
+
+
