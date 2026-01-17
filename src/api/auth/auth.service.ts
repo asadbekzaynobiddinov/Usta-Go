@@ -51,12 +51,24 @@ export class AuthService {
       where: { phone_number: dto.phone_number },
     });
 
-    // Agar raqam allaqachon verified bo‘lsa
     if (user && user.account_status === UserAccountStatus.VERIFIED) {
       throw new BadRequestException('Phone number already in use');
     }
 
-    // Agar user mavjud bo‘lmasa — yangi yaratamiz
+    // Agar user mavjud bo‘lsa, OTP tekshiramiz
+    if (user) {
+      const existingCode = await this.codeRepository.findOne({
+        where: { user: { id: user.id } },
+      });
+
+      if (existingCode && existingCode.valid_until > new Date()) {
+        throw new BadRequestException(
+          'Verification code is still valid. Please wait before requesting a new one.',
+        );
+      }
+    }
+
+    // Agar user yo‘q bo‘lsa yaratamiz
     if (!user) {
       const hashedPassword = await BcryptEncryption.encrypt(dto.password);
 
@@ -70,12 +82,9 @@ export class AuthService {
       await this.userRepository.save(user);
     }
 
-    // Eski OTP ni o‘chiramiz
-    await this.codeRepository.delete({
-      user: { id: user.id },
-    });
+    // Eski kodlarni o‘chiramiz
+    await this.codeRepository.delete({ user: { id: user.id } });
 
-    // Yangi OTP yaratamiz
     const otpPassword = String(generateOTP());
 
     const newVerificationCode = this.codeRepository.create({
@@ -86,9 +95,6 @@ export class AuthService {
 
     await this.codeRepository.save(newVerificationCode);
 
-    // SMS yuborish (ixtiyoriy)
-    // await mobizon.sendSms({ ... })
-
     await this.bot.telegram.sendMessage(
       config.CHANEL_ID,
       `New user registered with phone number: <b>${user.phone_number}</b>\nVerification code: <code>${otpPassword}</code>`,
@@ -97,7 +103,7 @@ export class AuthService {
 
     return {
       status_code: 201,
-      message: `OTP code sent to ${user.phone_number}`,
+      message: `OTP sent to ${user.phone_number}`,
       data: {
         verificationCode: newVerificationCode,
       },
