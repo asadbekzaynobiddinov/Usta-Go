@@ -15,6 +15,7 @@ import { AdminGuard } from 'src/common/guard/admin.guard';
 import { SelfGuard } from 'src/common/guard/self.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryDto } from 'src/common/dto';
+import { UserID } from 'src/common/decorator/user-id.decorator';
 
 @UseGuards(JwtGuard)
 @Controller('user')
@@ -38,8 +39,8 @@ export class UserController {
   }
 
   @Get('me')
-  getMe() {
-    return this.userService;
+  getMe(@UserID() id: string) {
+    return this.userService.getMe(id);
   }
 
   @UseGuards(SelfGuard)
