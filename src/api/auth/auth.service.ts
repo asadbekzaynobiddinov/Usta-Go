@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   BadRequestException,
   Injectable,
@@ -46,52 +47,57 @@ export class AuthService {
     private readonly tokenRepository: RefreshTokenRepository,
   ) {}
   async register(dto: RegisterDto) {
-    const phoneNumberInUse = await this.userRepository.exists({
+    let user = await this.userRepository.findOne({
       where: { phone_number: dto.phone_number },
     });
-    if (phoneNumberInUse) {
+
+    // Agar raqam allaqachon verified bo‘lsa
+    if (user && user.account_status === UserAccountStatus.VERIFIED) {
       throw new BadRequestException('Phone number already in use');
     }
 
-    const hashedPassword = (await BcryptEncryption.encrypt(
-      dto.password,
-    )) as string;
+    // Agar user mavjud bo‘lmasa — yangi yaratamiz
+    if (!user) {
+      const hashedPassword = await BcryptEncryption.encrypt(dto.password);
 
-    const newUser = this.userRepository.create({
-      phone_number: dto.phone_number,
-      password: hashedPassword,
-      language: dto.language,
-      account_status: UserAccountStatus.FILLED,
+      user = this.userRepository.create({
+        phone_number: dto.phone_number,
+        password: hashedPassword,
+        language: dto.language,
+        account_status: UserAccountStatus.FILLED,
+      });
+
+      await this.userRepository.save(user);
+    }
+
+    // Eski OTP ni o‘chiramiz
+    await this.codeRepository.delete({
+      user: { id: user.id },
     });
-    await this.userRepository.save(newUser);
 
+    // Yangi OTP yaratamiz
     const otpPassword = String(generateOTP());
+
     const newVerificationCode = this.codeRepository.create({
-      user: { id: newUser.id },
+      user: { id: user.id },
       code: Number(otpPassword),
       valid_until: new Date(Date.now() + 5 * 60 * 1000),
     });
+
     await this.codeRepository.save(newVerificationCode);
 
-    // const response = await mobizon.sendSms({
-    //   recipient: dto.phone_number,
-    //   text: `Your OTP code is: ${otpPassword}`,
-    //   from: '',
-    // });
-
-    const { password, ...userData } = newUser;
+    // SMS yuborish (ixtiyoriy)
+    // await mobizon.sendSms({ ... })
 
     await this.bot.telegram.sendMessage(
       config.CHANEL_ID,
-      `New user registered with phone number: <b>${newUser.phone_number}</b>\nVerification code: <code>${otpPassword}</code>`,
-      {
-        parse_mode: 'HTML',
-      },
+      `New user registered with phone number: <b>${user.phone_number}</b>\nVerification code: <code>${otpPassword}</code>`,
+      { parse_mode: 'HTML' },
     );
 
     return {
       status_code: 201,
-      message: `User registered succsessfuly and sended OTP password to ${newUser.phone_number}`,
+      message: `OTP code sent to ${user.phone_number}`,
       data: {
         verificationCode: newVerificationCode,
       },
