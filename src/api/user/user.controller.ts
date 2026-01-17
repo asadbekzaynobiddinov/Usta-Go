@@ -37,6 +37,11 @@ export class UserController {
     return this.userService.findOneById(id);
   }
 
+  @Get('me')
+  getMe() {
+    return this.userService;
+  }
+
   @UseGuards(SelfGuard)
   @Patch(':id')
   update(

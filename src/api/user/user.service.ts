@@ -42,6 +42,21 @@ export class UserService {
     };
   }
 
+  async getMe(id: string) {
+    const user = await this.repository.findOne({
+      where: { id },
+      relations: ['master_profile'],
+    });
+    if (!user) {
+      throw new NotFoundException('User data not found');
+    }
+    return {
+      status_code: 200,
+      message: 'User data fetched successfuly',
+      data: user,
+    };
+  }
+
   async update(id: string, dto: UpdateUserDto) {
     await this.findOneById(id);
 
