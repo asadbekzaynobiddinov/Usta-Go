@@ -1,25 +1,13 @@
-import { Entity, JoinColumn, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import { Entity, OneToMany } from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
-import { User } from './user.entity';
 import { Messages } from './messages.entity';
-import { MasterProfile } from './master-profile.entity';
+import { ChatParticipants } from './chat-participants.entity';
 
 @Entity()
 export class ChatRooms extends BaseEntity {
-  @ManyToOne(() => User, (user) => user.chats, { onDelete: 'SET NULL' })
-  user: User;
-
-  @ManyToOne(() => MasterProfile, (master) => master.chats, {
-    onDelete: 'SET NULL',
-  })
-  master: MasterProfile;
-
   @OneToMany(() => Messages, (messages) => messages.chat_room)
   messages: Messages[];
 
-  @OneToOne(() => Messages, (messages) => messages.chat, {
-    onDelete: 'SET NULL',
-  })
-  @JoinColumn()
-  last_message: Messages;
+  @OneToMany(() => ChatParticipants, (chp) => chp.chat)
+  participants: ChatParticipants;
 }

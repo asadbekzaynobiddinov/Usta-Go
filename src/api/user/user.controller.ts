@@ -16,6 +16,7 @@ import { SelfGuard } from 'src/common/guard/self.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryDto } from 'src/common/dto';
 import { UserID } from 'src/common/decorator/user-id.decorator';
+import { UserGuard } from 'src/common/guard/user.guard';
 
 @UseGuards(JwtGuard)
 @Controller('user')
@@ -33,14 +34,15 @@ export class UserController {
     });
   }
 
-  @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userService.findOneById(id);
-  }
-
+  @UseGuards(UserGuard)
   @Get('me')
   getMe(@UserID() id: string) {
     return this.userService.getMe(id);
+  }
+
+  @Get(':id')
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.userService.findOneById(id);
   }
 
   @UseGuards(SelfGuard)

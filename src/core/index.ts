@@ -1,8 +1,10 @@
 export * from './entity/admin.entity';
+export * from './entity/chat-participants.entity';
 export * from './entity/chat-rooms.entity';
 export * from './entity/master-profile.entity';
 export * from './entity/master-services.entity';
 export * from './entity/message-attachments.entity';
+export * from './entity/message-reads.entity';
 export * from './entity/messages.entity';
 export * from './entity/notifications.entity';
 export * from './entity/order-offers.entity';
@@ -17,10 +19,12 @@ export * from './entity/user-opinions.entity';
 export * from './entity/user.entity';
 
 export * from './repository/admin.repository';
+export * from './repository/chat-participants.repository';
 export * from './repository/chat-rooms.repository';
 export * from './repository/master-profile.repository';
 export * from './repository/master-services.repository';
 export * from './repository/message-attachments.repository';
+export * from './repository/message-reads.repository';
 export * from './repository/messages.repository';
 export * from './repository/notifications.repository';
 export * from './repository/order-offers.repository';

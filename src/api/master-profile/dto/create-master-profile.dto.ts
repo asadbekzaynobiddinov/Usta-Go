@@ -9,6 +9,12 @@ import {
 import { MasterGender, MasterStatus } from 'src/common/enum';
 
 export class CreateMasterProfileDto {
+  @IsString()
+  first_name: string;
+
+  @IsString()
+  last_name: string;
+
   @IsEnum(MasterGender, { message: 'Gender shoud be "male" or "female"' })
   gender: MasterGender;
 

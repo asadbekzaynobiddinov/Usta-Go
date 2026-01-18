@@ -37,8 +37,6 @@ export class ChatController {
 
       case 'user':
         return this.chatService.findAll({
-          where: { user: { id: userId } },
-          relations: ['master', 'last_message'],
           skip,
           take: query.limit,
           order: { [query.orderBy]: query.order },
@@ -46,8 +44,6 @@ export class ChatController {
 
       case 'master':
         return this.chatService.findAll({
-          where: { master: { id: userId } },
-          relations: ['user', 'last_message'],
           skip,
           take: query.limit,
           order: { [query.orderBy]: query.order },

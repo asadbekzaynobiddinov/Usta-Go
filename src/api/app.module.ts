@@ -16,7 +16,7 @@ import { MessageAttachmentsModule } from './message-attachments/message-attachme
 import { MessagesModule } from './messages/messages.module';
 import { ChatModule } from './chat/chat.module';
 import { UploadModule } from './upload/upload.module';
-import { WebSocketModule } from './websocket/websocket.module';
+// import { WebSocketModule } from './websocket/websocket.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -53,7 +53,7 @@ import { APP_GUARD } from '@nestjs/core';
     MessagesModule,
     MessageAttachmentsModule,
     UploadModule,
-    WebSocketModule,
+    // WebSocketModule,
   ],
   providers: [
     {

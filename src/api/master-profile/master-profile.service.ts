@@ -29,6 +29,8 @@ export class MasterProfileService {
     const newProfile = this.repository.create({
       user: { id: dto.user_id },
       occupations: [...dto.occupations],
+      first_name: dto.first_name,
+      last_name: dto.last_name,
       gender: dto.gender,
       passport_image_url: dto.passport_image_url,
       selfie_image_url: dto.selfie_image_url,
@@ -50,8 +52,6 @@ export class MasterProfileService {
     try {
       const profiles = await this.repository
         .createQueryBuilder('master')
-        .leftJoin('master.user', 'user')
-        .addSelect(['user.first_name', 'user.last_name'])
         .loadRelationCountAndMap(
           'master.completedOrdersCount',
           'master.orders',
@@ -68,6 +68,7 @@ export class MasterProfileService {
         )
         .where('master.status = :status', { status: MasterStatus.VERIFIED })
         .leftJoinAndSelect('master.services', 'services')
+        .leftJoinAndSelect('services.pictures', 'service_pictures')
         .orderBy(`master.${query.orderBy}`, `${query.order}`)
         .skip(skip)
         .take(query.limit)
@@ -88,8 +89,10 @@ export class MasterProfileService {
       .createQueryBuilder('master')
       .select([
         'master.id',
-        'master.bio',
+        'master.first_name',
+        'master.last_name',
         'master.gender',
+        'master.bio',
         'master.occupations',
         'master.experience',
         'master.rating_sum',
@@ -99,7 +102,7 @@ export class MasterProfileService {
       .leftJoin('master.user', 'user')
       .addSelect(['user.first_name', 'user.last_name'])
       .leftJoinAndSelect('master.services', 'services')
-      .leftJoinAndSelect('services.pictures', 'pictures')
+      .leftJoinAndSelect('services.pictures', 'service_pictures')
       .leftJoinAndSelect(
         'master.orders',
         'orders',
@@ -108,8 +111,9 @@ export class MasterProfileService {
           orderStatus: OrderStatus.COMPLETED,
         },
       )
-      .leftJoinAndSelect('orders.pictures', 'pictures')
+      .leftJoinAndSelect('orders.pictures', 'order_pictures_pictures')
       .leftJoinAndSelect('master.user_opinions', 'user_opinions')
+      .leftJoinAndSelect('user_opinions.pictures', 'user_opinion_pictures')
       .where('master.id = :id', { id })
       .andWhere('master.status = :status', { status: MasterStatus.VERIFIED })
       .getOne();
@@ -158,8 +162,15 @@ export class MasterProfileService {
   }
 
   async verify(id: string) {
-    await this.findOne(id);
-    await this.repository.update({ id }, { status: MasterStatus.VERIFIED });
+    const master = await this.repository.findOne({ where: { id } });
+
+    if (!master) {
+      throw new NotFoundException('Master profile not found');
+    }
+
+    master.status = MasterStatus.VERIFIED;
+    await this.repository.save(master);
+
     return {
       status_code: 200,
       message: 'Master profile verified successfuly',

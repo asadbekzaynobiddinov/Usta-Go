@@ -6,7 +6,6 @@ import { Notifications } from './notifications.entity';
 import { Orders } from './orders.entity';
 import { UserOpinions } from './user-opinions.entity';
 import { PaymentMethods } from './payment-methods.entity';
-import { ChatRooms } from './chat-rooms.entity';
 import { VerificationCodes } from './verificationcodes.entity';
 
 @Entity()
@@ -35,10 +34,10 @@ export class User extends BaseEntity {
   language: UserLang;
 
   @Column({
-    nullable: false,
+    nullable: true,
     type: 'enum',
     enum: UserAccountStatus,
-    default: UserAccountStatus.NOT_FILLED,
+    default: null,
   })
   account_status: UserAccountStatus;
 
@@ -56,9 +55,6 @@ export class User extends BaseEntity {
 
   @OneToMany(() => PaymentMethods, (payments) => payments.user)
   payment_methods: PaymentMethods[];
-
-  @OneToMany(() => ChatRooms, (chats) => chats.user)
-  chats: ChatRooms[];
 
   @OneToMany(() => VerificationCodes, (codes) => codes.user)
   verification_codes: VerificationCodes[];

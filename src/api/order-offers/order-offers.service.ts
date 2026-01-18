@@ -4,35 +4,90 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { OrderOffers, OrderOffersRepository } from 'src/core';
+import {
+  ChatParticipants,
+  ChatRooms,
+  Messages,
+  OrderOffers,
+  OrderOffersRepository,
+  Orders,
+} from 'src/core';
 import { CreateOrderOfferDto } from './dto/create-order-offer.dto';
 import { UpdateOrderOfferDto } from './dto/update-order-offer.dto';
-import { FindManyOptions, FindOneOptions } from 'typeorm';
+import { FindManyOptions, FindOneOptions, DataSource } from 'typeorm';
+import { ChatParticipantRole, MessageType } from 'src/common/enum';
 
 @Injectable()
 export class OrderOffersService {
   constructor(
     @InjectRepository(OrderOffers)
     private readonly repository: OrderOffersRepository,
+    private readonly dataSource: DataSource,
   ) {}
   async create(dto: CreateOrderOfferDto) {
-    const offered = await this.repository.exists({
-      where: { order: { id: dto.order_id } },
+    return await this.dataSource.transaction(async (manager) => {
+      const order = await manager.findOne(Orders, {
+        where: { id: dto.order_id },
+        relations: ['user'],
+      });
+
+      if (!order) throw new NotFoundException('Order not found');
+
+      const offered = await manager.count(OrderOffers, {
+        where: {
+          order: { id: dto.order_id },
+          master: { id: dto.master_id },
+        },
+      });
+
+      if (offered > 0)
+        throw new BadRequestException('You already sent offer to this order');
+
+      const newOffer = manager.create(OrderOffers, {
+        ...dto,
+        master: { id: dto.master_id },
+        order: { id: dto.order_id },
+      });
+      await manager.save(newOffer);
+
+      const newChat = manager.create(ChatRooms, {});
+      await manager.save(newChat);
+
+      const userParticipant = manager.create(ChatParticipants, {
+        chat_room: newChat,
+        user_id: order.user.id,
+        role: ChatParticipantRole.USER,
+      });
+
+      const masterParticipant = manager.create(ChatParticipants, {
+        chat_room: newChat,
+        user_id: dto.master_id,
+        role: ChatParticipantRole.MASTER,
+      });
+
+      await manager.save([userParticipant, masterParticipant]);
+
+      const newMessage = manager.create(Messages, {
+        content: newOffer.message,
+        chat_room: newChat,
+        type: MessageType.OFFER,
+        sender: masterParticipant,
+      });
+
+      await manager.save(newMessage);
+
+      return {
+        status_code: 201,
+        message: 'Offer created successfully',
+        data: {
+          offer: newOffer,
+          chat: {
+            participants: [userParticipant, masterParticipant],
+            message: newMessage,
+          },
+        },
+      };
     });
-    if (offered) {
-      throw new BadRequestException('You already sent offer to this order');
-    }
-    const newOffer = this.repository.create({
-      ...dto,
-      master: { id: dto.master_id },
-      order: { id: dto.order_id },
-    });
-    await this.repository.save(newOffer);
-    return {
-      status_code: 201,
-      message: 'Offer created succsessfuly',
-      data: newOffer,
-    };
   }
 
   async findAll(options?: FindManyOptions<OrderOffers>) {

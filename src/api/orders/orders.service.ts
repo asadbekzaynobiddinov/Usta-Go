@@ -95,7 +95,7 @@ export class OrdersService {
     };
   }
 
-  async acceptOffer(options: FindOneOptions<OrderOffers>, userId: string) {
+  async acceptOffer(options: FindOneOptions<OrderOffers>) {
     try {
       const offer = await this.orderOffersRepository.findOne(options);
       if (!offer) {
@@ -118,17 +118,10 @@ export class OrdersService {
         { master: { id: offer.master.id } },
       );
 
-      const newChat = this.chatRepository.create({
-        user: { id: userId },
-        master: { id: offer.master.id },
-      });
-
-      await this.chatRepository.save(newChat);
-
       return {
         status_code: 200,
         message: 'Offer accepted succsessfuly',
-        data: { offer, chat: newChat },
+        data: { offer },
       };
     } catch (error) {
       console.log(error);

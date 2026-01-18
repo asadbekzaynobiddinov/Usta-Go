@@ -1,21 +1,20 @@
-import { Entity, Column, ManyToOne, OneToMany, OneToOne } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
 import { ChatRooms } from './chat-rooms.entity';
 import { MessageAttachments } from './message-attachments.entity';
+import { ChatParticipants } from './chat-participants.entity';
+import { MessageReads } from './message-reads.entity';
+import { MessageType } from 'src/common/enum';
 
 @Entity()
 export class Messages extends BaseEntity {
   @Column({ nullable: false, type: 'text' })
   content: string;
 
-  @Column({ nullable: false, type: 'boolean', default: false })
-  is_read: boolean;
-
-  @Column({ nullable: false })
-  sender_id: string;
-
-  @Column({ nullable: false })
-  receiver_id: string;
+  @ManyToOne(() => ChatParticipants, (chp) => chp.messages, {
+    onDelete: 'CASCADE',
+  })
+  sender: ChatParticipants;
 
   @Column({ nullable: true, type: 'boolean' })
   is_deleted: boolean;
@@ -25,11 +24,12 @@ export class Messages extends BaseEntity {
   })
   chat_room: ChatRooms;
 
-  @OneToOne(() => ChatRooms, (chat) => chat.last_message, {
-    onDelete: 'SET NULL',
-  })
-  chat: ChatRooms;
+  @Column({ nullable: false, type: 'enum', enum: MessageType })
+  type: MessageType;
 
   @OneToMany(() => MessageAttachments, (ma) => ma.message)
   attachments: MessageAttachments[];
+
+  @OneToMany(() => MessageReads, (reads) => reads.message)
+  reads: MessageReads[];
 }

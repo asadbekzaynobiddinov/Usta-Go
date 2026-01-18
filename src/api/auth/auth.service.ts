@@ -76,7 +76,6 @@ export class AuthService {
         phone_number: dto.phone_number,
         password: hashedPassword,
         language: dto.language,
-        account_status: UserAccountStatus.FILLED,
       });
 
       await this.userRepository.save(user);

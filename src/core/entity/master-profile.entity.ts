@@ -1,4 +1,12 @@
-import { Entity, Column, OneToOne, OneToMany, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  OneToOne,
+  OneToMany,
+  JoinColumn,
+  BeforeInsert,
+  BeforeUpdate,
+} from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
 import { User } from './user.entity';
 import { MasterGender, MasterStatus } from 'src/common/enum';
@@ -8,7 +16,6 @@ import { Notifications } from './notifications.entity';
 import { Orders } from './orders.entity';
 import { UserOpinions } from './user-opinions.entity';
 import { OrderOffers } from './order-offers.entity';
-import { ChatRooms } from './chat-rooms.entity';
 
 @Entity()
 export class MasterProfile extends BaseEntity {
@@ -27,6 +34,12 @@ export class MasterProfile extends BaseEntity {
     default: '0.00',
   })
   wallet: number;
+
+  @Column({ nullable: true, type: 'varchar' })
+  first_name: string;
+
+  @Column({ nullable: true, type: 'varchar' })
+  last_name: string;
 
   @Column({ nullable: false, type: 'enum', enum: MasterGender })
   gender: MasterGender;
@@ -48,6 +61,19 @@ export class MasterProfile extends BaseEntity {
 
   @Column({ type: 'int', default: 0 })
   rating_count: number;
+
+  @Column({ type: 'float', default: 5 })
+  rating_avg: number;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  calcRating() {
+    if (this.rating_count >= 5) {
+      this.rating_avg = this.rating_sum / this.rating_count;
+    } else {
+      this.rating_avg = 5;
+    }
+  }
 
   @Column({ type: 'jsonb', nullable: true })
   address: {
@@ -86,7 +112,4 @@ export class MasterProfile extends BaseEntity {
 
   @OneToMany(() => OrderOffers, (offers) => offers.master)
   offers: OrderOffers[];
-
-  @OneToMany(() => ChatRooms, (chat) => chat.master)
-  chats: ChatRooms[];
 }

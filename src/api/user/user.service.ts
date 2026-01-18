@@ -46,6 +46,17 @@ export class UserService {
     const user = await this.repository.findOne({
       where: { id },
       relations: ['master_profile'],
+      select: [
+        'id',
+        'first_name',
+        'last_name',
+        'phone_number',
+        'avatar_url',
+        'language',
+        'account_status',
+        'created_at',
+        'updated_at',
+      ],
     });
     if (!user) {
       throw new NotFoundException('User data not found');

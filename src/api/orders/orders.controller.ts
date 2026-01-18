@@ -31,21 +31,30 @@ export class OrdersController {
     return this.ordersService.create({ ...createOrderDto, user_id: id });
   }
 
+  @UseGuards(UserGuard)
+  @Get('find-my-orders')
+  findMyOrders(
+    @UserID() id: string,
+    @Query()
+    query: QueryDto,
+  ) {
+    const skip = (query.page - 1) * query.limit;
+
+    return this.ordersService.findAll({
+      where: { user: { id } },
+      skip,
+      take: query.limit,
+      order: { [query.orderBy]: query.order },
+      relations: ['master', 'offers'],
+    });
+  }
+
   @Get()
   findAll(
     @Query()
     query: OrdersFindOptionsDto,
   ) {
     const skip = (query.page - 1) * query.limit;
-    if (query.user_id) {
-      return this.ordersService.findAll({
-        where: { user: { id: query.user_id } },
-        skip,
-        take: query.limit,
-        order: { [query.orderBy]: query.order },
-        relations: ['pictures', 'offers', 'offers.master'],
-      });
-    }
     return this.ordersService.findAll({
       skip,
       take: query.limit,
@@ -85,13 +94,10 @@ export class OrdersController {
     @Param('id', ParseUUIDPipe) id: string,
     @UserID() userId: string,
   ) {
-    return this.ordersService.acceptOffer(
-      {
-        where: { id, order: { user: { id: userId } } },
-        relations: ['master', 'order'],
-      },
-      userId,
-    );
+    return this.ordersService.acceptOffer({
+      where: { id, order: { user: { id: userId } } },
+      relations: ['master', 'order'],
+    });
   }
 
   @UseGuards(UserGuard)
