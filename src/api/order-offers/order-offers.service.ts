@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -14,8 +15,13 @@ import {
 } from 'src/core';
 import { CreateOrderOfferDto } from './dto/create-order-offer.dto';
 import { UpdateOrderOfferDto } from './dto/update-order-offer.dto';
-import { FindManyOptions, FindOneOptions, DataSource } from 'typeorm';
-import { ChatParticipantRole, MessageType } from 'src/common/enum';
+import { FindManyOptions, FindOneOptions, DataSource, Not } from 'typeorm';
+import {
+  ChatParticipantRole,
+  MessageType,
+  OrderOfferStatus,
+  OrderStatus,
+} from 'src/common/enum';
 
 @Injectable()
 export class OrderOffersService {
@@ -43,29 +49,31 @@ export class OrderOffersService {
       if (offered > 0)
         throw new BadRequestException('You already sent offer to this order');
 
+      const newChat = manager.create(ChatRooms, {});
+      await manager.save(newChat);
+
       const newOffer = manager.create(OrderOffers, {
         ...dto,
+        chat_room: { id: newChat.id },
         master: { id: dto.master_id },
         order: { id: dto.order_id },
       });
       await manager.save(newOffer);
 
-      const newChat = manager.create(ChatRooms, {});
-      await manager.save(newChat);
-
       const userParticipant = manager.create(ChatParticipants, {
-        chat_room: newChat,
+        chat: { id: newChat.id },
         user_id: order.user.id,
         role: ChatParticipantRole.USER,
       });
 
       const masterParticipant = manager.create(ChatParticipants, {
-        chat_room: newChat,
+        chat: { id: newChat.id },
         user_id: dto.master_id,
         role: ChatParticipantRole.MASTER,
       });
 
-      await manager.save([userParticipant, masterParticipant]);
+      await manager.save(userParticipant);
+      await manager.save(masterParticipant);
 
       const newMessage = manager.create(Messages, {
         content: newOffer.message,
@@ -111,14 +119,118 @@ export class OrderOffersService {
     };
   }
 
-  async acceptOffer(id: string) {
+  async acceptOffer(id: string, userId: string) {
     return await this.dataSource.transaction(async (manager) => {
       const offer = await manager.findOne(OrderOffers, {
         where: { id },
-        relations: ['order.user.chat'],
+        relations: ['order', 'chat_room', 'chat_room.participants'],
       });
-      console.log(offer);
-      return offer;
+
+      if (!offer) {
+        throw new NotFoundException('Offer not found');
+      }
+
+      const participant = offer.chat_room.participants.find(
+        (p) => p.user_id === userId,
+      );
+
+      if (!participant) {
+        throw new ForbiddenException(
+          'Forbidden user (you are not a participant of this chat)',
+        );
+      }
+      if (offer.status === OrderOfferStatus.ACCEPTED) {
+        throw new BadRequestException('Offer already accepted');
+      }
+
+      offer.status = OrderOfferStatus.ACCEPTED;
+      await manager.save(offer);
+
+      await manager.update(
+        OrderOffers,
+        {
+          order: { id: offer.order.id },
+          id: Not(id),
+          status: OrderOfferStatus.PENDING,
+        },
+        { status: OrderOfferStatus.REJECTED },
+      );
+
+      await manager.update(
+        Orders,
+        {
+          id: offer.order.id,
+        },
+        {
+          status: OrderStatus.IN_PROGRESS,
+        },
+      );
+
+      const newMessage = manager.create(Messages, {
+        content: 'Your offer has been accepted',
+        sender: { id: participant.id },
+        type: MessageType.OFFER_RESPONSE,
+        chat_room: { id: offer.chat_room.id },
+      });
+
+      await manager.save(newMessage);
+
+      return {
+        status_code: 200,
+        message: 'Order accepted successfuly',
+        data: {
+          offer,
+          participants: offer.chat_room.participants,
+          message: newMessage,
+        },
+      };
+    });
+  }
+
+  async rejectOffer(offerId: string, userId: string) {
+    return await this.dataSource.transaction(async (manager) => {
+      const offer = await manager.findOne(OrderOffers, {
+        where: { id: offerId },
+        relations: ['chat_room', 'chat_room.participants', 'order'],
+      });
+
+      if (!offer) {
+        throw new NotFoundException('Offer not found');
+      }
+
+      const participants = offer.chat_room.participants ?? [];
+      const participant = participants.find((p) => p.user_id === userId);
+
+      if (!participant) {
+        throw new ForbiddenException(
+          'Forbidden user (you are not a participant of this chat)',
+        );
+      }
+
+      if (offer.status === OrderOfferStatus.REJECTED) {
+        throw new BadRequestException('Offer already rejected');
+      }
+
+      offer.status = OrderOfferStatus.REJECTED;
+      await manager.save(offer);
+
+      const newMessage = manager.create(Messages, {
+        content: 'Your offer has been rejected',
+        sender: { id: participant.id },
+        type: MessageType.OFFER_RESPONSE,
+        chat_room: { id: offer.chat_room.id },
+      });
+      await manager.save(newMessage);
+
+      return {
+        status_code: 200,
+        message: 'Offer rejected successfuly',
+        data: {
+          offer,
+          participants: offer.chat_room.participants,
+          message: newMessage,
+        },
+      };
     });
   }
 

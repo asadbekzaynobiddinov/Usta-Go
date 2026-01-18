@@ -9,6 +9,7 @@ import {
   UseGuards,
   Query,
   ParseUUIDPipe,
+  HttpCode,
 } from '@nestjs/common';
 import { OrderOffersService } from './order-offers.service';
 import { CreateOrderOfferDto } from './dto/create-order-offer.dto';
@@ -81,15 +82,22 @@ export class OrderOffersController {
   }
 
   @UseGuards(UserGuard)
-  @Post('accept/:id')
-  acceptOffer(@Param('id', ParseUUIDPipe) id: string) {
-    return this.orderOffersService;
+  @HttpCode(200)
+  @Patch(':id/accept')
+  acceptOffer(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UserID() userId: string,
+  ) {
+    return this.orderOffersService.acceptOffer(id, userId);
   }
 
   @UseGuards(UserGuard)
-  @Post('reject/:id')
-  rejectOffer(@Param('id', ParseUUIDPipe) id: string) {
-    return this.orderOffersService;
+  @Patch('reject/:id')
+  rejectOffer(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UserID() userId: string,
+  ) {
+    return this.orderOffersService.rejectOffer(id, userId);
   }
 
   @UseGuards(MasterGuard)

@@ -3,6 +3,7 @@ import { BaseEntity } from 'src/common/database/BaseEntity';
 import { OrderOfferStatus } from 'src/common/enum';
 import { Orders } from './orders.entity';
 import { MasterProfile } from './master-profile.entity';
+import { ChatRooms } from './chat-rooms.entity';
 
 @Entity()
 export class OrderOffers extends BaseEntity {
@@ -30,4 +31,10 @@ export class OrderOffers extends BaseEntity {
     onDelete: 'CASCADE',
   })
   master: MasterProfile;
+
+  @ManyToOne(() => ChatRooms, (chat) => chat.offers, {
+    onDelete: 'CASCADE',
+    nullable: false,
+  })
+  chat_room: ChatRooms;
 }

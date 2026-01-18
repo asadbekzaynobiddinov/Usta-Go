@@ -2,6 +2,7 @@ import { Entity, OneToMany } from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
 import { Messages } from './messages.entity';
 import { ChatParticipants } from './chat-participants.entity';
+import { OrderOffers } from './order-offers.entity';
 
 @Entity()
 export class ChatRooms extends BaseEntity {
@@ -9,5 +10,8 @@ export class ChatRooms extends BaseEntity {
   messages: Messages[];
 
   @OneToMany(() => ChatParticipants, (chp) => chp.chat)
-  participants: ChatParticipants;
+  participants: ChatParticipants[];
+
+  @OneToMany(() => OrderOffers, (offer) => offer.chat_room)
+  offers: OrderOffers[];
 }

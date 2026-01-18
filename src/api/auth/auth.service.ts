@@ -13,7 +13,6 @@ import {
   UserRepository,
 } from 'src/core';
 import { JwtService } from '@nestjs/jwt';
-import { InjectBot } from 'nestjs-telegraf';
 import { config } from 'src/config';
 import {
   MasterStatus,
