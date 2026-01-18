@@ -111,6 +111,17 @@ export class OrderOffersService {
     };
   }
 
+  async acceptOffer(id: string) {
+    return await this.dataSource.transaction(async (manager) => {
+      const offer = await manager.findOne(OrderOffers, {
+        where: { id },
+        relations: ['order.user.chat'],
+      });
+      console.log(offer);
+      return offer;
+    });
+  }
+
   async update(id: string, dto: UpdateOrderOfferDto, userId: string) {
     await this.findOne({ where: { id, master: { id: userId } } });
     await this.repository.update({ id }, { ...dto });

@@ -14,7 +14,6 @@ import {
 } from 'src/core';
 import { JwtService } from '@nestjs/jwt';
 import { InjectBot } from 'nestjs-telegraf';
-import { Telegraf } from 'telegraf';
 import { config } from 'src/config';
 import {
   MasterStatus,
@@ -42,7 +41,6 @@ export class AuthService {
     @InjectRepository(VerificationCodes)
     private readonly codeRepository: VerificationCodesRepository,
     private jwt: JwtService,
-    @InjectBot() private bot: Telegraf,
     @InjectRepository(RefreshToken)
     private readonly tokenRepository: RefreshTokenRepository,
   ) {}
@@ -93,12 +91,6 @@ export class AuthService {
     });
 
     await this.codeRepository.save(newVerificationCode);
-
-    await this.bot.telegram.sendMessage(
-      config.CHANEL_ID,
-      `New user registered with phone number: <b>${user.phone_number}</b>\nVerification code: <code>${otpPassword}</code>`,
-      { parse_mode: 'HTML' },
-    );
 
     return {
       status_code: 201,
@@ -395,18 +387,10 @@ export class AuthService {
     //   );
     // }
 
-    await this.bot.telegram.sendMessage(
-      config.CHANEL_ID,
-      `Resent verification code to user with phone number: <b>${user.phone_number}</b>\nNew Verification code: <code>${otpPassword}</code>`,
-      {
-        parse_mode: 'HTML',
-      },
-    );
-
     return {
       status_code: 200,
       message: `OTP password resent to ${dto.phone_number}`,
-      data: {},
+      data: { newVerificationCode },
     };
   }
 

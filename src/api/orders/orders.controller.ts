@@ -9,7 +9,6 @@ import {
   UseGuards,
   Query,
   ParseUUIDPipe,
-  HttpCode,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -68,47 +67,6 @@ export class OrdersController {
     return this.ordersService.findOne({
       where: { id },
       relations: ['pictures', 'offers', 'offers.master'],
-    });
-  }
-
-  @UseGuards(UserGuard)
-  @Get('offers/:id')
-  findAllOffers(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Query() query: QueryDto,
-  ) {
-    const skip = (query.page - 1) * query.limit;
-    return this.ordersService.findAllOffers({
-      where: { order: { id } },
-      skip,
-      take: query.limit,
-      order: { [query.orderBy]: query.order },
-      relations: ['master'],
-    });
-  }
-
-  @UseGuards(UserGuard)
-  @HttpCode(200)
-  @Post('accept-offer/:id')
-  accceptOffer(
-    @Param('id', ParseUUIDPipe) id: string,
-    @UserID() userId: string,
-  ) {
-    return this.ordersService.acceptOffer({
-      where: { id, order: { user: { id: userId } } },
-      relations: ['master', 'order'],
-    });
-  }
-
-  @UseGuards(UserGuard)
-  @HttpCode(200)
-  @Post('reject-offer/:id')
-  rejectOffer(
-    @Param('id', ParseUUIDPipe) id: string,
-    @UserID() userId: string,
-  ) {
-    return this.ordersService.rejectOffer({
-      where: { id, order: { user: { id: userId } } },
     });
   }
 

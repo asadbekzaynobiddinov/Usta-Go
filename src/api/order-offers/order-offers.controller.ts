@@ -18,6 +18,7 @@ import { UserID } from 'src/common/decorator/user-id.decorator';
 import { UserROLE } from 'src/common/decorator/user-role.decorator';
 import { QueryDto } from 'src/common/dto';
 import { MasterGuard } from 'src/common/guard/master.guard';
+import { UserGuard } from 'src/common/guard/user.guard';
 
 @UseGuards(JwtGuard)
 @Controller('order-offers')
@@ -77,6 +78,18 @@ export class OrderOffersController {
       where: { id, master: { id: userId } },
       relations: ['order'],
     });
+  }
+
+  @UseGuards(UserGuard)
+  @Post('accept/:id')
+  acceptOffer(@Param('id', ParseUUIDPipe) id: string) {
+    return this.orderOffersService;
+  }
+
+  @UseGuards(UserGuard)
+  @Post('reject/:id')
+  rejectOffer(@Param('id', ParseUUIDPipe) id: string) {
+    return this.orderOffersService;
   }
 
   @UseGuards(MasterGuard)
