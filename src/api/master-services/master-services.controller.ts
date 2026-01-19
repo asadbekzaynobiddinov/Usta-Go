@@ -17,6 +17,7 @@ import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { UserID } from 'src/common/decorator/user-id.decorator';
 import { MasterGuard } from 'src/common/guard/master.guard';
 import { MasterServicesFindDto } from './dto/find-options.dto';
+import { SearchServiceDto } from './dto/search-services.dto';
 
 @UseGuards(JwtGuard)
 @Controller('master-services')
@@ -49,6 +50,11 @@ export class MasterServicesController {
       take: query.limit,
       order: { [query.orderBy]: query.order },
     });
+  }
+
+  @Get('search')
+  search(@Query() query: SearchServiceDto) {
+    return this.masterServicesService.search(query);
   }
 
   @Get(':id')

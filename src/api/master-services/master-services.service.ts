@@ -9,6 +9,7 @@ import {
   PicturesOfMasterServicesRepository,
 } from 'src/core';
 import { FindManyOptions, FindOneOptions } from 'typeorm';
+import { SearchServiceDto } from './dto/search-services.dto';
 
 @Injectable()
 export class MasterServicesService {
@@ -55,6 +56,43 @@ export class MasterServicesService {
       status_code: 200,
       message: 'Master services fetched successfuly',
       data: services,
+    };
+  }
+
+  async search(dto: SearchServiceDto) {
+    const query = this.repository.createQueryBuilder('service');
+
+    if (dto.title) {
+      query.andWhere('service.title ILIKE :title', { title: `%${dto.title}%` });
+    }
+
+    if (dto.minPrice) {
+      query.andWhere('service.price >= :minPrice', { minPrice: dto.minPrice });
+    }
+
+    if (dto.maxPrice) {
+      query.andWhere('service.price <= :maxPrice', { maxPrice: dto.maxPrice });
+    }
+
+    const page = dto.page || 1;
+    const limit = dto.limit || 10;
+    const skip = (page - 1) * limit;
+
+    query.skip(skip).take(limit).orderBy('service.created_at', 'DESC');
+
+    query.leftJoinAndSelect('service.master', 'master');
+
+    const [data, total] = await query.getManyAndCount();
+
+    return {
+      status_code: 200,
+      message: 'Services fetched successfuly',
+      data: {
+        services: data,
+        total,
+        page,
+        lastPage: Math.ceil(total / limit),
+      },
     };
   }
 
