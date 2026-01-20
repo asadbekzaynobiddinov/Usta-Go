@@ -37,7 +37,7 @@ export class User extends BaseEntity {
     nullable: true,
     type: 'enum',
     enum: UserAccountStatus,
-    default: null,
+    default: UserAccountStatus.PENDING,
   })
   account_status: UserAccountStatus;
 

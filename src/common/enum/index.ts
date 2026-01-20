@@ -94,6 +94,7 @@ export enum PaymentProvider {
 }
 
 export enum UserAccountStatus {
+  PENDING = 'pending',
   VERIFIED = 'verified',
   SUSPENDED = 'suspended',
 }
