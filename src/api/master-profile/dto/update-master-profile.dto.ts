@@ -5,6 +5,7 @@ import {
   IsObject,
   IsInt,
   IsArray,
+  IsUrl,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { MasterGender } from 'src/common/enum';
@@ -34,6 +35,18 @@ export class UpdateMasterProfileDto {
   @IsOptional()
   @IsString()
   selfie_image_url?: string;
+
+  @IsOptional()
+  @IsString()
+  first_name?: string;
+
+  @IsOptional()
+  @IsString()
+  last_name?: string;
+
+  @IsOptional()
+  @IsUrl()
+  profile_image_url?: string;
 
   @IsOptional()
   @IsObject()

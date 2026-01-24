@@ -41,6 +41,9 @@ export class MasterProfile extends BaseEntity {
   @Column({ nullable: true, type: 'varchar' })
   last_name: string;
 
+  @Column({ nullable: true, type: 'varchar' })
+  profile_image_url: string;
+
   @Column({ nullable: false, type: 'enum', enum: MasterGender })
   gender: MasterGender;
 

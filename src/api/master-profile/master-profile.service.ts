@@ -52,6 +52,21 @@ export class MasterProfileService {
     try {
       const profiles = await this.repository
         .createQueryBuilder('master')
+        .select([
+          'master.id',
+          'master.first_name',
+          'master.last_name',
+          'master.profile_image_url',
+          'master.gender',
+          'master.bio',
+          'master.occupations',
+          'master.experience',
+          'master.rating_sum',
+          'master.rating_count',
+          'master.address',
+          'master.created_at',
+          'master.updated_at',
+        ])
         .loadRelationCountAndMap(
           'master.completedOrdersCount',
           'master.orders',
@@ -91,6 +106,7 @@ export class MasterProfileService {
         'master.id',
         'master.first_name',
         'master.last_name',
+        'master.profile_image_url',
         'master.gender',
         'master.bio',
         'master.occupations',
@@ -98,6 +114,8 @@ export class MasterProfileService {
         'master.rating_sum',
         'master.rating_count',
         'master.address',
+        'master.created_at',
+        'master.updated_at',
       ])
       .leftJoin('master.user', 'user')
       .addSelect(['user.first_name', 'user.last_name'])
