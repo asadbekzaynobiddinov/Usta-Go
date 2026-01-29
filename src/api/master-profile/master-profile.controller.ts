@@ -20,6 +20,8 @@ import { UserGuard } from 'src/common/guard/user.guard';
 import { MasterGuard } from 'src/common/guard/master.guard';
 import { AdminGuard } from 'src/common/guard/admin.guard';
 import { QueryDto } from 'src/common/dto';
+import { UpdateMasterProfileQuery } from './dto/update-master-prifile-query.dto';
+import { UserROLE } from 'src/common/decorator/user-role.decorator';
 
 @UseGuards(JwtGuard)
 @Controller('master-profile')
@@ -54,13 +56,20 @@ export class MasterProfileController {
     return this.masterProfileService.findOne(id);
   }
 
-  @UseGuards(SelfGuard)
   @Patch(':id')
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: UpdateMasterProfileQuery,
     @Body() updateMasterProfileDto: UpdateMasterProfileDto,
+    @UserID() userId: string,
+    @UserROLE() role: string,
   ) {
-    return this.masterProfileService.update(id, updateMasterProfileDto);
+    if ((role === 'admin' || role === 'superadmin') && query.master_id) {
+      return this.masterProfileService.update(
+        query.master_id,
+        updateMasterProfileDto,
+      );
+    }
+    return this.masterProfileService.update(userId, updateMasterProfileDto);
   }
 
   @UseGuards(SelfGuard)

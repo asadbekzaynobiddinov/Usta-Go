@@ -17,6 +17,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryDto } from 'src/common/dto';
 import { UserID } from 'src/common/decorator/user-id.decorator';
 import { UserGuard } from 'src/common/guard/user.guard';
+import { UpdateUserQuery } from './dto/update-user-query.dto';
+import { UserROLE } from 'src/common/decorator/user-role.decorator';
 
 @UseGuards(JwtGuard)
 @Controller('user')
@@ -45,13 +47,17 @@ export class UserController {
     return this.userService.findOneById(id);
   }
 
-  @UseGuards(SelfGuard)
   @Patch(':id')
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: UpdateUserQuery,
     @Body() updateUserDto: UpdateUserDto,
+    @UserID() userId: string,
+    @UserROLE() userRole: string,
   ) {
-    return this.userService.update(id, updateUserDto);
+    if ((userRole === 'admin' || userRole === 'superadmin') && query.user_id) {
+      return this.userService.update(query.user_id, updateUserDto);
+    }
+    return this.userService.update(userId, updateUserDto);
   }
 
   @UseGuards(SelfGuard)
