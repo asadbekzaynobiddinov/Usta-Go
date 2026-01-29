@@ -6,17 +6,32 @@ import {
   UseGuards,
   Query,
   ForbiddenException,
+  Post,
+  Body,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtGuard } from 'src/common/guard/jwt-auth.guard';
 import { UserID } from 'src/common/decorator/user-id.decorator';
 import { UserROLE } from 'src/common/decorator/user-role.decorator';
 import { QueryDto } from 'src/common/dto';
+import { CreateChatDto } from './dto/create-chat.dto';
+import { ChatParticipantRole } from 'src/common/enum';
 
 @UseGuards(JwtGuard)
 @Controller('chat')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
+
+  @Post()
+  create(
+    @Body() createChatDto: CreateChatDto,
+    @UserID() id: string,
+    @UserROLE() role: ChatParticipantRole,
+  ) {
+    return this.chatService.create({
+      participants: [{ id, role }, ...createChatDto.participants],
+    });
+  }
 
   @Get()
   findAll(
