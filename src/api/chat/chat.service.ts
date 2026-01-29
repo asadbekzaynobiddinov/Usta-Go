@@ -19,25 +19,30 @@ export class ChatService {
   ) {}
 
   async create(dto: CreateChatDto) {
-    const chat = await this.repository.save(this.repository.create({}));
-    const participants: ChatParticipants[] = [];
-    for (const participant of dto.participants) {
-      const newParticipant = await this.participantsRepository.save(
-        this.participantsRepository.create({
-          chat: { id: chat.id },
-          role: participant.role,
-        }),
-      );
-      participants.push(newParticipant);
+    try {
+      const chat = await this.repository.save(this.repository.create({}));
+      const participants: ChatParticipants[] = [];
+      for (const participant of dto.participants) {
+        const newParticipant = await this.participantsRepository.save(
+          this.participantsRepository.create({
+            chat: { id: chat.id },
+            role: participant.role,
+            user_id: participant.id,
+          }),
+        );
+        participants.push(newParticipant);
+      }
+      return {
+        status_code: 201,
+        message: 'Chat room created successfully',
+        data: {
+          ...chat,
+          participants,
+        },
+      };
+    } catch (error) {
+      console.log(error);
     }
-    return {
-      status_code: 201,
-      message: 'Chat room created successfully',
-      data: {
-        ...chat,
-        participants,
-      },
-    };
   }
 
   async findAll(options: FindManyOptions<ChatRooms>) {

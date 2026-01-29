@@ -5,7 +5,6 @@ import {
   Delete,
   UseGuards,
   Query,
-  ForbiddenException,
   Post,
   Body,
 } from '@nestjs/common';
@@ -36,37 +35,25 @@ export class ChatController {
   @Get()
   findAll(
     @UserID() userId: string,
-    @UserROLE() userRole: string,
     @Query() query: QueryDto,
+    @UserROLE() role: string,
   ) {
     const skip = (query.page - 1) * query.limit;
-    switch (userRole) {
-      case 'admin':
-      case 'superadmin':
-        return this.chatService.findAll({
-          relations: ['master', 'user', 'last_message'],
-          skip,
-          take: query.limit,
-          order: { [query.orderBy]: query.order },
-        });
-
-      case 'user':
-        return this.chatService.findAll({
-          skip,
-          take: query.limit,
-          order: { [query.orderBy]: query.order },
-        });
-
-      case 'master':
-        return this.chatService.findAll({
-          skip,
-          take: query.limit,
-          order: { [query.orderBy]: query.order },
-        });
-
-      default:
-        throw new ForbiddenException('Invalid user role');
+    if (role === 'admin' || role === 'superadmin') {
+      return this.chatService.findAll({
+        skip,
+        take: query.limit,
+        order: { [query.orderBy]: query.order },
+        relations: ['messages', 'participants', 'offers'],
+      });
     }
+    return this.chatService.findAll({
+      where: { participants: { user_id: userId } },
+      skip,
+      take: query.limit,
+      order: { [query.orderBy]: query.order },
+      relations: ['messages', 'participants', 'offers'],
+    });
   }
 
   @Get(':id')

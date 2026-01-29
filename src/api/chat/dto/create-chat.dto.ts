@@ -1,4 +1,11 @@
-import { IsUUID, IsArray, ValidateNested, IsEnum } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsUUID,
+  IsArray,
+  ValidateNested,
+  IsEnum,
+  ArrayMinSize,
+} from 'class-validator';
 import { ChatParticipantRole } from 'src/common/enum';
 
 class ParticipantsDto {
@@ -11,6 +18,8 @@ class ParticipantsDto {
 
 export class CreateChatDto {
   @IsArray()
-  @ValidateNested()
+  @ValidateNested({ each: true })
+  @ArrayMinSize(1)
+  @Type(() => ParticipantsDto)
   participants: ParticipantsDto[];
 }

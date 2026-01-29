@@ -62,10 +62,10 @@ export enum OrderOfferStatus {
 }
 
 export enum ChatParticipantRole {
-  USER = 'USER',
-  MASTER = 'MASTER',
-  SYSTEM = 'SYSTEM',
-  SUPPORT = 'SUPPORT',
+  USER = 'user',
+  MASTER = 'master',
+  SYSTEM = 'system',
+  SUPPORT = 'support',
 }
 
 export enum MessageType {
