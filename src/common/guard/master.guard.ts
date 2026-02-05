@@ -9,6 +9,7 @@ import {
 export class MasterGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
+    console.log(req.user);
     if (!req.user?.role || req.user?.role !== 'master') {
       throw new ForbiddenException('Forbidden user');
     } else {

@@ -28,8 +28,7 @@ import { SearchMastereByServicesDto } from './dto/search.dto';
 export class MasterProfileController {
   constructor(private readonly masterProfileService: MasterProfileService) {}
 
-  @UseGuards(JwtGuard)
-  @UseGuards(UserGuard)
+  @UseGuards(JwtGuard, UserGuard)
   @Post()
   create(
     @Body() createMasterProfileDto: CreateMasterProfileDto,
@@ -51,8 +50,7 @@ export class MasterProfileController {
     return this.masterProfileService.search(query);
   }
 
-  @UseGuards(JwtGuard)
-  @UseGuards(MasterGuard)
+  @UseGuards(JwtGuard, MasterGuard)
   @Get('me')
   getMe(@UserID() id: string) {
     return this.masterProfileService.getMe(id);
@@ -81,8 +79,7 @@ export class MasterProfileController {
     return this.masterProfileService.update(userId, updateMasterProfileDto);
   }
 
-  @UseGuards(JwtGuard)
-  @UseGuards(SelfGuard)
+  @UseGuards(JwtGuard, SelfGuard)
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.masterProfileService.delete(id);

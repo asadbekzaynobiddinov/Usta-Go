@@ -18,18 +18,20 @@ import { UserID } from 'src/common/decorator/user-id.decorator';
 import { MasterGuard } from 'src/common/guard/master.guard';
 import { MasterServicesFindDto } from './dto/find-options.dto';
 import { SearchServiceDto } from './dto/search-services.dto';
+import { UserROLE } from 'src/common/decorator/user-role.decorator';
 
 @Controller('master-services')
 export class MasterServicesController {
   constructor(private readonly masterServicesService: MasterServicesService) {}
 
-  @UseGuards(JwtGuard)
-  @UseGuards(MasterGuard)
+  @UseGuards(JwtGuard, MasterGuard)
   @Post()
   create(
     @Body() createMasterServiceDto: CreateMasterServiceDto,
     @UserID() id: string,
+    @UserROLE() role: string,
   ) {
+    console.log(role);
     return this.masterServicesService.create({
       ...createMasterServiceDto,
       master_id: id,
@@ -65,8 +67,7 @@ export class MasterServicesController {
     });
   }
 
-  @UseGuards(JwtGuard)
-  @UseGuards(MasterGuard)
+  @UseGuards(JwtGuard, MasterGuard)
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -75,8 +76,7 @@ export class MasterServicesController {
     return this.masterServicesService.update(id, updateMasterServiceDto);
   }
 
-  @UseGuards(JwtGuard)
-  @UseGuards(MasterGuard)
+  @UseGuards(JwtGuard, MasterGuard)
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.masterServicesService.remove(id);
