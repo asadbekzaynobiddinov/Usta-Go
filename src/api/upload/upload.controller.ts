@@ -24,7 +24,13 @@ export class UploadController {
         destination: (req, file, callback) => {
           const folder = req.query.folder as string;
 
-          const allowedFolders = ['chat', 'profile', 'order', 'opinion'];
+          const allowedFolders = [
+            'chat',
+            'profile',
+            'order',
+            'opinion',
+            'service',
+          ];
 
           if (!allowedFolders.includes(folder)) {
             return callback(

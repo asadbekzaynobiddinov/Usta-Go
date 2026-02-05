@@ -15,7 +15,7 @@ export class MasterServices extends BaseEntity {
   description: string;
 
   @OneToMany(() => PicturesOfMasterServices, (pictures) => pictures.service)
-  pictures: PicturesOfMasterServices;
+  pictures: PicturesOfMasterServices[];
 
   @ManyToOne(() => MasterProfile, (master) => master.services, {
     onDelete: 'CASCADE',

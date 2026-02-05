@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MasterStatus, OrderStatus } from 'src/common/enum';
 import { UpdateMasterProfileDto } from './dto/update-master-profile.dto';
 import { QueryDto } from 'src/common/dto';
+import { SearchMastereByServicesDto } from './dto/search.dto';
 
 @Injectable()
 export class MasterProfileService {
@@ -117,8 +118,6 @@ export class MasterProfileService {
         'master.created_at',
         'master.updated_at',
       ])
-      .leftJoin('master.user', 'user')
-      .addSelect(['user.first_name', 'user.last_name'])
       .leftJoinAndSelect('master.services', 'services')
       .leftJoinAndSelect('services.pictures', 'service_pictures')
       .leftJoinAndSelect(
@@ -144,6 +143,103 @@ export class MasterProfileService {
       status_code: 200,
       message: 'Master profile fetched successfully',
       data: profile,
+    };
+  }
+
+  async search(query: SearchMastereByServicesDto) {
+    const skip = ((query.page || 1) - 1) * (query.limit || 10);
+
+    const qb = this.repository
+      .createQueryBuilder('master')
+      .leftJoinAndSelect('master.services', 'services')
+      .leftJoinAndSelect('services.pictures', 'service_pictures')
+      .loadRelationCountAndMap(
+        'master.completedOrdersCount',
+        'master.orders',
+        'orders',
+        (qb) =>
+          qb.where('orders.status = :status', {
+            status: OrderStatus.COMPLETED,
+          }),
+      )
+      .loadRelationCountAndMap(
+        'master.userOpinionsCount',
+        'master.user_opinions',
+        'opinions',
+      )
+      .where('master.status = :status', { status: MasterStatus.VERIFIED })
+      .where('master.status = :status', {
+        status: MasterStatus.VERIFIED,
+      });
+
+    if (query.title) {
+      qb.andWhere('services.title ILIKE :title', {
+        title: `%${query.title}%`,
+      });
+    }
+
+    if (query.minPrice) {
+      qb.andWhere('services.price >= :minPrice', {
+        minPrice: query.minPrice,
+      });
+    }
+
+    if (query.maxPrice) {
+      qb.andWhere('services.price <= :maxPrice', {
+        maxPrice: query.maxPrice,
+      });
+    }
+
+    const masters = await qb
+      .orderBy(
+        `master.${query.orderBy || 'created_at'}`,
+        `${query.order || 'DESC'}`,
+      )
+      .skip(skip)
+      .take(query.limit || 10)
+      .getMany();
+
+    const data = masters.map((m) => ({
+      id: m.id,
+      first_name: m.first_name,
+      last_name: m.last_name,
+      profile_image_url: m.profile_image_url,
+      gender: m.gender,
+      bio: m.bio,
+      occupations: m.occupations,
+      experience: m.experience,
+      rating_sum: m.rating_sum,
+      rating_count: m.rating_count,
+      address: m.address,
+      created_at: m.created_at,
+
+      completedOrdersCount: (m as unknown as { completedOrdersCount: number })
+        .completedOrdersCount,
+      userOpinionsCount: (m as unknown as { userOpinionsCount: number })
+        .userOpinionsCount,
+
+      services: m.services?.map((s) => ({
+        id: s.id,
+        title: s.title,
+        price: s.price,
+        description: s.description,
+
+        pictures: s.pictures?.map((p) => ({
+          id: p.id,
+          url: p.picture_url,
+        })),
+      })),
+    }));
+
+    return {
+      status_code: 200,
+      message: 'Masters fetched successfully',
+      data: {
+        masters: data,
+        total: data.length,
+        page: query.page || 1,
+        lastPage: Math.ceil(data.length / (query.limit || 10)),
+      },
     };
   }
 

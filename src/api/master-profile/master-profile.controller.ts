@@ -22,12 +22,13 @@ import { AdminGuard } from 'src/common/guard/admin.guard';
 import { QueryDto } from 'src/common/dto';
 import { UpdateMasterProfileQuery } from './dto/update-master-prifile-query.dto';
 import { UserROLE } from 'src/common/decorator/user-role.decorator';
+import { SearchMastereByServicesDto } from './dto/search.dto';
 
-@UseGuards(JwtGuard)
 @Controller('master-profile')
 export class MasterProfileController {
   constructor(private readonly masterProfileService: MasterProfileService) {}
 
+  @UseGuards(JwtGuard)
   @UseGuards(UserGuard)
   @Post()
   create(
@@ -45,17 +46,25 @@ export class MasterProfileController {
     return this.masterProfileService.findAll(query);
   }
 
+  @Get('search')
+  search(@Query() query: SearchMastereByServicesDto) {
+    return this.masterProfileService.search(query);
+  }
+
+  @UseGuards(JwtGuard)
   @UseGuards(MasterGuard)
   @Get('me')
   getMe(@UserID() id: string) {
     return this.masterProfileService.getMe(id);
   }
 
+  @UseGuards(JwtGuard)
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.masterProfileService.findOne(id);
   }
 
+  @UseGuards(JwtGuard)
   @Patch(':id')
   update(
     @Query() query: UpdateMasterProfileQuery,
@@ -72,6 +81,7 @@ export class MasterProfileController {
     return this.masterProfileService.update(userId, updateMasterProfileDto);
   }
 
+  @UseGuards(JwtGuard)
   @UseGuards(SelfGuard)
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {

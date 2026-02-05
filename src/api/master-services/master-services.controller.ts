@@ -19,11 +19,11 @@ import { MasterGuard } from 'src/common/guard/master.guard';
 import { MasterServicesFindDto } from './dto/find-options.dto';
 import { SearchServiceDto } from './dto/search-services.dto';
 
-@UseGuards(JwtGuard)
 @Controller('master-services')
 export class MasterServicesController {
   constructor(private readonly masterServicesService: MasterServicesService) {}
 
+  @UseGuards(JwtGuard)
   @UseGuards(MasterGuard)
   @Post()
   create(
@@ -65,6 +65,7 @@ export class MasterServicesController {
     });
   }
 
+  @UseGuards(JwtGuard)
   @UseGuards(MasterGuard)
   @Patch(':id')
   update(
@@ -74,6 +75,7 @@ export class MasterServicesController {
     return this.masterServicesService.update(id, updateMasterServiceDto);
   }
 
+  @UseGuards(JwtGuard)
   @UseGuards(MasterGuard)
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
