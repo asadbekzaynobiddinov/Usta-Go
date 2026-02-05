@@ -21,6 +21,7 @@ export class ChatParticipants extends BaseEntity {
   user_id: string;
 
   @Column({
+    nullable: true,
     type: 'enum',
     enum: ChatParticipantRole,
   })
