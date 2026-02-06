@@ -2,7 +2,6 @@ import { Entity, Column, OneToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
 import { UserAccountStatus, UserLang } from 'src/common/enum';
 import { MasterProfile } from './master-profile.entity';
-import { Notifications } from './notifications.entity';
 import { Orders } from './orders.entity';
 import { UserOpinions } from './user-opinions.entity';
 import { PaymentMethods } from './payment-methods.entity';
@@ -43,9 +42,6 @@ export class User extends BaseEntity {
 
   @OneToOne(() => MasterProfile, (master) => master.user)
   master_profile: MasterProfile;
-
-  @OneToMany(() => Notifications, (notifications) => notifications.user)
-  notifications: Notifications[];
 
   @OneToMany(() => Orders, (order) => order.user)
   orders: Orders[];

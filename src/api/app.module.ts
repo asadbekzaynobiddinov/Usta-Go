@@ -19,6 +19,7 @@ import { UploadModule } from './upload/upload.module';
 // import { WebSocketModule } from './websocket/websocket.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { APP_GUARD } from '@nestjs/core';
     MessagesModule,
     MessageAttachmentsModule,
     UploadModule,
+    NotificationsModule,
     // WebSocketModule,
   ],
   providers: [

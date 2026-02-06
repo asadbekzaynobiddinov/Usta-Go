@@ -12,7 +12,6 @@ import { User } from './user.entity';
 import { MasterGender, MasterStatus } from 'src/common/enum';
 import { MasterServices } from './master-services.entity';
 import { PayoutAccounts } from './payout-accounts.entity';
-import { Notifications } from './notifications.entity';
 import { Orders } from './orders.entity';
 import { UserOpinions } from './user-opinions.entity';
 import { OrderOffers } from './order-offers.entity';
@@ -103,9 +102,6 @@ export class MasterProfile extends BaseEntity {
 
   @OneToMany(() => PayoutAccounts, (payoutAccounts) => payoutAccounts.master)
   payout_accounts: PayoutAccounts[];
-
-  @OneToMany(() => Notifications, (notifications) => notifications.master)
-  notifications: Notifications[];
 
   @OneToMany(() => Orders, (order) => order.master)
   orders: Orders[];
