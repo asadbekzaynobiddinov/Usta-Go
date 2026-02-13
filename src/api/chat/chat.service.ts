@@ -53,29 +53,43 @@ export class ChatService {
 
       const chats = await this.repository
         .createQueryBuilder('chat')
+
+        // Oxirgi message
         .leftJoinAndSelect(
           'chat.messages',
           'messages',
           `messages.id = (
-        SELECT m.id
-        FROM messages m
-        WHERE m."chatRoomId" = chat.id
-        ORDER BY m.created_at DESC
-        LIMIT 1
-      )`,
+      SELECT m.id
+      FROM messages m
+      WHERE m."chatRoomId" = chat.id
+      ORDER BY m.created_at DESC
+      LIMIT 1
+    )`,
         )
+
         .leftJoinAndSelect('messages.reads', 'reads')
+
+        // BARCHA participants
+        .leftJoinAndSelect('chat.participants', 'participants')
+
         .leftJoinAndSelect('chat.offers', 'offers')
+
+        // Faqat user bor chatlarni olish
+        .where(
+          role === RoleAdmin.ADMIN || role === RoleAdmin.SUPERADMIN
+            ? '1=1'
+            : `chat.id IN (
+          SELECT cp."chatId"
+          FROM chat_participants cp
+          WHERE cp.user_id = :userId
+        )`,
+          { userId },
+        )
+
         .skip(skip)
         .take(query.limit)
         .orderBy(`chat.${query.orderBy}`, query.order)
-        .leftJoinAndSelect('chat.participants', 'participants')
-        .where(
-          role === RoleAdmin.ADMIN || role === RoleAdmin.SUPERADMIN
-            ? {}
-            : 'participants.user_id = :userId',
-          { userId },
-        )
+
         .getMany();
 
       return {
