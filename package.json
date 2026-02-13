@@ -43,6 +43,7 @@
     "crypto": "^1.0.1",
     "dotenv": "^16.6.1",
     "error-stack-parser": "^2.1.4",
+    "firebase-admin": "^13.6.1",
     "fp-ts": "^2.16.11",
     "ioredis": "^5.8.2",
     "mobizon-node": "^0.5.5",

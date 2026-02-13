@@ -20,6 +20,7 @@ import { WebSocketModule } from './websocket/websocket.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { NotificationsModule } from './notifications/notifications.module';
+import { FirebaseModule } from 'src/common/firebase/firebase.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     UploadModule,
     NotificationsModule,
     WebSocketModule,
+    FirebaseModule,
   ],
   providers: [
     {

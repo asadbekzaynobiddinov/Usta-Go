@@ -21,82 +21,74 @@ export class ChatService {
   ) {}
 
   async create(dto: CreateChatDto) {
-    try {
-      const chat = await this.repository.save(this.repository.create({}));
-      const participants: ChatParticipants[] = [];
-      for (const participant of dto.participants) {
-        const newParticipant = await this.participantsRepository.save(
-          this.participantsRepository.create({
-            chat: { id: chat.id },
-            role: participant.role,
-            user_id: participant.id,
-          }),
-        );
-        participants.push(newParticipant);
-      }
-      return {
-        status_code: 201,
-        message: 'Chat room created successfully',
-        data: {
-          ...chat,
-          participants,
-        },
-      };
-    } catch (error) {
-      console.log(error);
+    const chat = await this.repository.save(this.repository.create({}));
+    const participants: ChatParticipants[] = [];
+    for (const participant of dto.participants) {
+      const newParticipant = await this.participantsRepository.save(
+        this.participantsRepository.create({
+          chat: { id: chat.id },
+          role: participant.role,
+          user_id: participant.id,
+        }),
+      );
+      participants.push(newParticipant);
     }
+    return {
+      status_code: 201,
+      message: 'Chat room created successfully',
+      data: {
+        ...chat,
+        participants,
+      },
+    };
   }
 
   async findAll(query: QueryDto, userId: string, role: RoleAdmin) {
-    try {
-      const skip = (query.page - 1) * query.limit;
+    const skip = (query.page - 1) * query.limit;
 
-      const chats = await this.repository
-        .createQueryBuilder('chat')
+    const chats = await this.repository
+      .createQueryBuilder('chat')
 
-        .leftJoinAndSelect(
-          'chat.messages',
-          'messages',
-          `messages.id = (
+      .leftJoinAndSelect(
+        'chat.messages',
+        'messages',
+        `messages.id = (
       SELECT m.id
       FROM messages m
       WHERE m."chatRoomId" = chat.id
       ORDER BY m.created_at DESC
       LIMIT 1
     )`,
-        )
+      )
 
-        .leftJoinAndSelect('messages.reads', 'reads')
+      .leftJoinAndSelect('messages.reads', 'reads')
 
-        .leftJoinAndSelect('chat.participants', 'participants')
+      .leftJoinAndSelect('chat.participants', 'participants')
 
-        .leftJoinAndSelect('chat.offers', 'offers')
+      .leftJoinAndSelect('chat.offers', 'offers')
 
-        .where(
-          role === RoleAdmin.ADMIN || role === RoleAdmin.SUPERADMIN
-            ? '1=1'
-            : `chat.id IN (
+      .where(
+        role === RoleAdmin.ADMIN || role === RoleAdmin.SUPERADMIN
+          ? '1=1'
+          : `chat.id IN (
           SELECT cp."chatId"
           FROM chat_participants cp
           WHERE cp.user_id = :userId
         )`,
-          { userId },
-        )
+        { userId },
+      )
 
-        .skip(skip)
-        .take(query.limit)
-        .orderBy(`chat.${query.orderBy}`, query.order)
+      .skip(skip)
+      .take(query.limit)
+      .orderBy(`chat.${query.orderBy}`, query.order)
 
-        .getMany();
+      .getMany();
 
-      return {
-        status_code: 200,
-        message: 'Chat rooms fetched successfully',
-        data: chats,
-      };
-    } catch (error) {
-      console.log(error);
-    }
+    return {
+      status_code: 200,
+      message: 'Chat rooms fetched successfully',
+      data: chats,
+    };
   }
 
   async findOne(options: FindOneOptions<ChatRooms>) {

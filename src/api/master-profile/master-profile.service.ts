@@ -50,54 +50,50 @@ export class MasterProfileService {
   async findAll(query: QueryDto) {
     const skip = (query.page - 1) * query.limit;
 
-    try {
-      const profiles = await this.repository
-        .createQueryBuilder('master')
-        .select([
-          'master.id',
-          'master.first_name',
-          'master.last_name',
-          'master.profile_image_url',
-          'master.gender',
-          'master.bio',
-          'master.occupations',
-          'master.experience',
-          'master.rating_sum',
-          'master.rating_count',
-          'master.address',
-          'master.created_at',
-          'master.updated_at',
-        ])
-        .loadRelationCountAndMap(
-          'master.completedOrdersCount',
-          'master.orders',
-          'orders',
-          (qb) =>
-            qb.where('orders.status = :status', {
-              status: OrderStatus.COMPLETED,
-            }),
-        )
-        .loadRelationCountAndMap(
-          'master.userOpinionsCount',
-          'master.user_opinions',
-          'opinions',
-        )
-        .where('master.status = :status', { status: MasterStatus.VERIFIED })
-        .leftJoinAndSelect('master.services', 'services')
-        .leftJoinAndSelect('services.pictures', 'service_pictures')
-        .orderBy(`master.${query.orderBy}`, `${query.order}`)
-        .skip(skip)
-        .take(query.limit)
-        .getMany();
+    const profiles = await this.repository
+      .createQueryBuilder('master')
+      .select([
+        'master.id',
+        'master.first_name',
+        'master.last_name',
+        'master.profile_image_url',
+        'master.gender',
+        'master.bio',
+        'master.occupations',
+        'master.experience',
+        'master.rating_sum',
+        'master.rating_count',
+        'master.address',
+        'master.created_at',
+        'master.updated_at',
+      ])
+      .loadRelationCountAndMap(
+        'master.completedOrdersCount',
+        'master.orders',
+        'orders',
+        (qb) =>
+          qb.where('orders.status = :status', {
+            status: OrderStatus.COMPLETED,
+          }),
+      )
+      .loadRelationCountAndMap(
+        'master.userOpinionsCount',
+        'master.user_opinions',
+        'opinions',
+      )
+      .where('master.status = :status', { status: MasterStatus.VERIFIED })
+      .leftJoinAndSelect('master.services', 'services')
+      .leftJoinAndSelect('services.pictures', 'service_pictures')
+      .orderBy(`master.${query.orderBy}`, `${query.order}`)
+      .skip(skip)
+      .take(query.limit)
+      .getMany();
 
-      return {
-        status_code: 200,
-        message: 'Master profiles fetched successfully',
-        data: profiles,
-      };
-    } catch (error) {
-      console.log(error);
-    }
+    return {
+      status_code: 200,
+      message: 'Master profiles fetched successfully',
+      data: profiles,
+    };
   }
 
   async findOne(id: string) {

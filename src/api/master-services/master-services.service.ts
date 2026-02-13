@@ -141,11 +141,9 @@ export class MasterServicesService {
 
   async remove(id: string) {
     await this.findOne({ where: { id } });
-    try {
-      await this.repository.delete({ id });
-    } catch (error) {
-      console.log(error);
-    }
+
+    await this.repository.delete({ id });
+
     return {
       status_code: 200,
       message: 'Master service deleted successfuly',

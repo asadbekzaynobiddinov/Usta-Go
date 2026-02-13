@@ -18,7 +18,6 @@ import { UserID } from 'src/common/decorator/user-id.decorator';
 import { MasterGuard } from 'src/common/guard/master.guard';
 import { MasterServicesFindDto } from './dto/find-options.dto';
 import { SearchServiceDto } from './dto/search-services.dto';
-import { UserROLE } from 'src/common/decorator/user-role.decorator';
 
 @Controller('master-services')
 export class MasterServicesController {
@@ -29,9 +28,7 @@ export class MasterServicesController {
   create(
     @Body() createMasterServiceDto: CreateMasterServiceDto,
     @UserID() id: string,
-    @UserROLE() role: string,
   ) {
-    console.log(role);
     return this.masterServicesService.create({
       ...createMasterServiceDto,
       master_id: id,

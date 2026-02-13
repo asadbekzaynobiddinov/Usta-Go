@@ -82,8 +82,6 @@ export class UploadController {
       throw new BadRequestException('folder query parameter is required');
     }
 
-    console.log(files);
-
     try {
       const data = files.map((file) => ({
         filename: file.filename,

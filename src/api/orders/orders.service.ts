@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -28,31 +24,26 @@ export class OrdersService {
       description: dto.description,
       address: dto.address,
     });
-    try {
-      await this.repository.save(newOrder);
 
-      const pictures: OrderPictures[] = [];
+    await this.repository.save(newOrder);
 
-      if (dto.pictures?.length) {
-        for (const url of dto.pictures) {
-          const newPic = this.picturesRepository.create({
-            order: { id: newOrder.id },
-            picture_url: url,
-          });
-          await this.picturesRepository.save(newPic);
-          pictures.push(newPic);
-        }
+    const pictures: OrderPictures[] = [];
+
+    if (dto.pictures?.length) {
+      for (const url of dto.pictures) {
+        const newPic = this.picturesRepository.create({
+          order: { id: newOrder.id },
+          picture_url: url,
+        });
+        await this.picturesRepository.save(newPic);
+        pictures.push(newPic);
       }
-      return {
-        status_code: 201,
-        message: 'Order created successfully',
-        data: { ...newOrder, pictures },
-      };
-    } catch (error) {
-      console.log(error);
-      await this.repository.delete({ id: newOrder.id });
-      throw new ConflictException('Could not crete order');
     }
+    return {
+      status_code: 201,
+      message: 'Order created successfully',
+      data: { ...newOrder, pictures },
+    };
   }
 
   async findAll(options?: FindManyOptions<Orders>) {

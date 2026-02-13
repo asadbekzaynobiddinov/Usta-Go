@@ -23,6 +23,9 @@ export type ConfigType = {
   INFOBIP_API: string;
   BOT_TOKEN: string;
   CHANEL_ID: string;
+  FIREBASE_PROJECT_ID: string;
+  FIREBASE_CLIENT_EMAIL: string;
+  FIREBASE_PRIVATE_KEY: string;
 };
 
 export const config: ConfigType = {
@@ -46,4 +49,9 @@ export const config: ConfigType = {
   INFOBIP_API: process.env.INFOBIP_API as string,
   BOT_TOKEN: process.env.BOT_TOKEN as string,
   CHANEL_ID: process.env.CHANEL_ID as string,
+  FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID as string,
+  FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL as string,
+  FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY
+    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+    : (process.env.FIREBASE_PRIVATE_KEY as string),
 };

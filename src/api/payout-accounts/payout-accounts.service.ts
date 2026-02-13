@@ -16,11 +16,9 @@ export class PayoutAccountsService {
       master: { id: dto.master_id },
       ...dto,
     });
-    try {
-      await this.repository.save(newPayoutAccount);
-    } catch (error) {
-      console.log(error);
-    }
+
+    await this.repository.save(newPayoutAccount);
+
     return {
       status_code: 201,
       message: 'Payout account created succsessfuly',

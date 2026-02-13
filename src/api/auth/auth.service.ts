@@ -111,8 +111,6 @@ export class AuthService {
       })
       .getOne();
 
-    console.log(user, dto);
-
     if (!user) {
       throw new NotFoundException('User not found or already verified');
     }
@@ -183,8 +181,6 @@ export class AuthService {
       where: { phone_number: dto.phone_number },
       relations: ['master_profile'],
     });
-
-    console.log(user);
 
     if (!user) {
       throw new BadRequestException('Invalid phone number or password');
