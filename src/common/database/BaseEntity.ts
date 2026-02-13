@@ -12,14 +12,14 @@ export class BaseEntity {
 
   @CreateDateColumn({
     name: 'created_at',
-    type: 'date',
+    type: 'timestamp',
     default: new Date(Date.now()),
   })
   created_at: number;
 
   @UpdateDateColumn({
     name: 'updated_at',
-    type: 'date',
+    type: 'timestamp',
     default: new Date(Date.now()),
   })
   updated_at: number;

@@ -54,7 +54,6 @@ export class ChatService {
       const chats = await this.repository
         .createQueryBuilder('chat')
 
-        // Oxirgi message
         .leftJoinAndSelect(
           'chat.messages',
           'messages',
@@ -69,12 +68,10 @@ export class ChatService {
 
         .leftJoinAndSelect('messages.reads', 'reads')
 
-        // BARCHA participants
         .leftJoinAndSelect('chat.participants', 'participants')
 
         .leftJoinAndSelect('chat.offers', 'offers')
 
-        // Faqat user bor chatlarni olish
         .where(
           role === RoleAdmin.ADMIN || role === RoleAdmin.SUPERADMIN
             ? '1=1'
