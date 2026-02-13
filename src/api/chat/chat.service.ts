@@ -65,7 +65,7 @@ export class ChatService {
       )`,
         )
         .leftJoinAndSelect('messages.reads', 'reads')
-        .leftJoin('chat.offers', 'offers')
+        .leftJoinAndSelect('chat.offers', 'offers')
         .skip(skip)
         .take(query.limit)
         .orderBy(`chat.${query.orderBy}`, query.order)
