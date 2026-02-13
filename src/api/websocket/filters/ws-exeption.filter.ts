@@ -1,22 +1,22 @@
-// import { Catch, ArgumentsHost, ExceptionFilter } from '@nestjs/common';
-// import { WsException } from '@nestjs/websockets';
+import { Catch, ArgumentsHost, ExceptionFilter } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
 
-// @Catch()
-// export class WsAllExceptionsFilter implements ExceptionFilter {
-//   catch(exception: any, host: ArgumentsHost) {
-//     const client = host.switchToWs().getClient();
+@Catch()
+export class WsAllExceptionsFilter implements ExceptionFilter {
+  catch(exception: any, host: ArgumentsHost) {
+    const client = host.switchToWs().getClient();
 
-//     let error = exception;
+    let error = exception;
 
-//     if (!(exception instanceof WsException)) {
-//       error = new WsException(
-//         exception?.response?.message || 'Validation error',
-//       );
-//     }
+    if (!(exception instanceof WsException)) {
+      error = new WsException(
+        exception?.response?.message || 'Validation error',
+      );
+    }
 
-//     client.emit('exeption', {
-//       success: false,
-//       message: error.getError(),
-//     });
-//   }
-// }
+    client.emit('exeption', {
+      success: false,
+      message: error.getError(),
+    });
+  }
+}

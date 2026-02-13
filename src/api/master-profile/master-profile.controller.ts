@@ -85,7 +85,7 @@ export class MasterProfileController {
     return this.masterProfileService.delete(id);
   }
 
-  @UseGuards(AdminGuard)
+  @UseGuards(JwtGuard, AdminGuard)
   @Patch('verify/:id')
   verify(@Param('id', ParseUUIDPipe) id: string) {
     return this.masterProfileService.verify(id);

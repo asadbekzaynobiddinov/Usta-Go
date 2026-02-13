@@ -1,4 +1,5 @@
-import { IsArray, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { MessageType } from 'src/common/enum';
 
 export class MessageBodyDto {
   @IsUUID()
@@ -11,11 +12,11 @@ export class MessageBodyDto {
   @IsArray()
   pictures?: string[];
 
-  @IsUUID()
-  receiver: string;
+  @IsEnum(MessageType)
+  type: MessageType;
 }
 
-export class MessageIdDto {
+export class IdDto {
   @IsUUID()
   id: string;
 }

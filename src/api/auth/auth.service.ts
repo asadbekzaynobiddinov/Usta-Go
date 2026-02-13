@@ -101,12 +101,17 @@ export class AuthService {
   }
 
   async verifyNumber(dto: VerifyNumberDto) {
-    const user = await this.userRepository.findOne({
-      where: {
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.phone_number = :phone_number', {
         phone_number: dto.phone_number,
-        account_status: Not(UserAccountStatus.VERIFIED),
-      },
-    });
+      })
+      .andWhere('user.account_status != :status', {
+        status: UserAccountStatus.VERIFIED,
+      })
+      .getOne();
+
+    console.log(user, dto);
 
     if (!user) {
       throw new NotFoundException('User not found or already verified');
@@ -178,6 +183,8 @@ export class AuthService {
       where: { phone_number: dto.phone_number },
       relations: ['master_profile'],
     });
+
+    console.log(user);
 
     if (!user) {
       throw new BadRequestException('Invalid phone number or password');

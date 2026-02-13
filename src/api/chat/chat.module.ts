@@ -16,6 +16,6 @@ import { RedisProvider } from '../redis/redis.provider';
     }),
   ],
   controllers: [ChatController],
-  providers: [ChatService, JwtSocketMiddleware],
+  providers: [ChatService, JwtSocketMiddleware, RedisProvider],
 })
 export class ChatModule {}

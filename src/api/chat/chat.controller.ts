@@ -14,7 +14,7 @@ import { UserID } from 'src/common/decorator/user-id.decorator';
 import { UserROLE } from 'src/common/decorator/user-role.decorator';
 import { QueryDto } from 'src/common/dto';
 import { CreateChatDto } from './dto/create-chat.dto';
-import { ChatParticipantRole } from 'src/common/enum';
+import { ChatParticipantRole, RoleAdmin } from 'src/common/enum';
 
 @UseGuards(JwtGuard)
 @Controller('chat')
@@ -36,31 +36,21 @@ export class ChatController {
   findAll(
     @UserID() userId: string,
     @Query() query: QueryDto,
-    @UserROLE() role: string,
+    @UserROLE() role: RoleAdmin,
   ) {
-    const skip = (query.page - 1) * query.limit;
-    if (role === 'admin' || role === 'superadmin') {
-      return this.chatService.findAll({
-        skip,
-        take: query.limit,
-        order: { [query.orderBy]: query.order },
-        relations: ['messages', 'participants', 'offers'],
-      });
-    }
-    return this.chatService.findAll({
-      where: { participants: { user_id: userId } },
-      skip,
-      take: query.limit,
-      order: { [query.orderBy]: query.order },
-      relations: ['messages', 'participants', 'offers'],
-    });
+    return this.chatService.findAll(query, userId, role);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.chatService.findOne({
       where: { id },
-      relations: ['last_message'],
+      relations: [
+        'participants',
+        'messages',
+        'messages.sender',
+        'messages.reads',
+      ],
     });
   }
 

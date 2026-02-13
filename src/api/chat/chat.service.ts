@@ -6,8 +6,10 @@ import {
   ChatRooms,
   ChatRoomsRepository,
 } from 'src/core';
-import { FindManyOptions, FindOneOptions } from 'typeorm';
+import { FindOneOptions } from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
+import { QueryDto } from 'src/common/dto';
+import { RoleAdmin } from 'src/common/enum';
 
 @Injectable()
 export class ChatService {
@@ -45,13 +47,44 @@ export class ChatService {
     }
   }
 
-  async findAll(options: FindManyOptions<ChatRooms>) {
-    const chats = await this.repository.find(options);
-    return {
-      status_code: 200,
-      message: 'Chat rooms fetched successfully',
-      data: chats,
-    };
+  async findAll(query: QueryDto, userId: string, role: RoleAdmin) {
+    try {
+      const skip = (query.page - 1) * query.limit;
+
+      const chats = await this.repository
+        .createQueryBuilder('chat')
+        .leftJoinAndSelect(
+          'chat.messages',
+          'messages',
+          `messages.id = (
+        SELECT m.id
+        FROM messages m
+        WHERE m."chatRoomId" = chat.id
+        ORDER BY m.created_at DESC
+        LIMIT 1
+      )`,
+        )
+        .leftJoinAndSelect('messages.reads', 'reads')
+        .skip(skip)
+        .take(query.limit)
+        .orderBy(`chat.${query.orderBy}`, query.order)
+        .leftJoinAndSelect('chat.participants', 'participants')
+        .where(
+          role === RoleAdmin.ADMIN || role === RoleAdmin.SUPERADMIN
+            ? {}
+            : 'participants.user_id = :userId',
+          { userId },
+        )
+        .getMany();
+
+      return {
+        status_code: 200,
+        message: 'Chat rooms fetched successfully',
+        data: chats,
+      };
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async findOne(options: FindOneOptions<ChatRooms>) {
