@@ -46,7 +46,7 @@ export class UpdateMasterProfileDto {
 
   @IsOptional()
   @IsUrl()
-  profile_image_url?: string;
+  avatar_url?: string;
 
   @IsOptional()
   @IsObject()

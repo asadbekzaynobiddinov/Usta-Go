@@ -36,22 +36,18 @@ export class ChatController {
   findAll(
     @UserID() userId: string,
     @Query() query: QueryDto,
-    @UserROLE() role: RoleAdmin,
+    @UserROLE() role: string,
   ) {
     return this.chatService.findAll(query, userId, role);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.chatService.findOne({
-      where: { id },
-      relations: [
-        'participants',
-        'messages',
-        'messages.sender',
-        'messages.reads',
-      ],
-    });
+  findOne(
+    @Param('id') id: string,
+    @UserID() userId: string,
+    @UserROLE() role: string,
+  ) {
+    return this.chatService.findOne(id, userId, role);
   }
 
   @Delete(':id')

@@ -17,7 +17,7 @@ export class CreateMasterProfileDto {
 
   @IsOptional()
   @IsUrl()
-  profile_image_url?: string;
+  avatar_url?: string;
 
   @IsEnum(MasterGender, { message: 'Gender shoud be "male" or "female"' })
   gender: MasterGender;

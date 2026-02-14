@@ -12,15 +12,15 @@ export class BaseEntity {
 
   @CreateDateColumn({
     name: 'created_at',
-    type: 'timestamp',
-    default: new Date(Date.now()),
+    type: 'timestamptz',
+    precision: 6,
   })
-  created_at: number;
+  created_at: Date;
 
   @UpdateDateColumn({
     name: 'updated_at',
-    type: 'timestamp',
-    default: new Date(Date.now()),
+    type: 'timestamptz',
+    precision: 6,
   })
-  updated_at: number;
+  updated_at: Date;
 }
