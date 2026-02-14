@@ -290,7 +290,11 @@ export class ChatService {
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
 
-      return chat;
+      return {
+        status_code: 200,
+        message: 'Chat fetched successfully',
+        data: chat,
+      };
     });
   }
 
