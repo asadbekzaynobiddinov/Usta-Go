@@ -44,10 +44,11 @@ export class ChatController {
   @Get(':id')
   findOne(
     @Param('id') id: string,
+    @Query() query: QueryDto,
     @UserID() userId: string,
     @UserROLE() role: string,
   ) {
-    return this.chatService.findOne(id, userId, role);
+    return this.chatService.findOne(id, userId, role, query);
   }
 
   @Delete(':id')
