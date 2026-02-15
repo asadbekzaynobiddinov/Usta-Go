@@ -9,7 +9,7 @@ import {
   MasterProfile,
   User,
 } from 'src/core';
-import { DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { QueryDto } from 'src/common/dto';
 import { ChatParticipantRole, RoleAdmin } from 'src/common/enum';
@@ -48,51 +48,116 @@ export class ChatService {
   }
 
   async findAll(query: QueryDto, userId: string, role: string) {
-    const skip = (query.page - 1) * query.limit;
-
-    const chats = await this.repository
-      .createQueryBuilder('chat')
-
-      .leftJoinAndSelect(
-        'chat.messages',
-        'messages',
-        `messages.id = (
+    return await this.dataSource.transaction(async (manager) => {
+      const skip = (query.page - 1) * query.limit;
+      const chats = await manager
+        .createQueryBuilder(ChatRooms, 'chat')
+        .leftJoinAndSelect(
+          'chat.messages',
+          'messages',
+          `messages.id = (
       SELECT m.id
       FROM messages m
       WHERE m."chatRoomId" = chat.id
       ORDER BY m.created_at DESC
       LIMIT 1
     )`,
-      )
+        )
 
-      .leftJoinAndSelect('messages.reads', 'reads')
+        .leftJoinAndSelect('messages.reads', 'reads')
 
-      .leftJoinAndSelect('chat.participants', 'participants')
+        .leftJoinAndSelect('chat.participants', 'participants')
 
-      .leftJoinAndSelect('chat.offers', 'offers')
+        .leftJoinAndSelect('chat.offers', 'offers')
 
-      .where(
-        role === RoleAdmin.ADMIN || role === RoleAdmin.SUPERADMIN
-          ? '1=1'
-          : `chat.id IN (
+        .where(
+          role === RoleAdmin.ADMIN || role === RoleAdmin.SUPERADMIN
+            ? '1=1'
+            : `chat.id IN (
           SELECT cp."chatId"
           FROM chat_participants cp
           WHERE cp.user_id = :userId
         )`,
-        { userId },
-      )
+          { userId },
+        )
 
-      .skip(skip)
-      .take(query.limit)
-      .orderBy(`chat.${query.orderBy}`, query.order)
+        .skip(skip)
+        .take(query.limit)
+        .orderBy(`chat.${query.orderBy}`, query.order)
 
-      .getMany();
+        .getMany();
 
-    return {
-      status_code: 200,
-      message: 'Chat rooms fetched successfully',
-      data: chats,
-    };
+      const userIds: string[] = [];
+      const masterIds: string[] = [];
+
+      for (const chat of chats) {
+        const user = chat.participants.find(
+          (p) => p.role === ChatParticipantRole.USER,
+        );
+        const master = chat.participants.find(
+          (p) => p.role === ChatParticipantRole.MASTER,
+        );
+
+        if (user) userIds.push(user.user_id);
+        if (master) masterIds.push(master.user_id);
+      }
+
+      const users = await manager.find(User, {
+        where: {
+          id: In(userIds),
+        },
+        select: ['id', 'first_name', 'last_name', 'phone_number', 'avatar_url'],
+      });
+
+      const masters = await manager
+        .createQueryBuilder(MasterProfile, 'm')
+        .leftJoin('m.user', 'user')
+        .where('m.id IN (:...ids)', { ids: masterIds })
+        .select([
+          'm.id AS id',
+          'm.first_name AS first_name',
+          'm.last_name AS last_name',
+          'm.avatar_url AS avatar_url',
+          'user.phone_number AS phone_number',
+        ])
+        .getRawMany();
+
+      const userMap = new Map(users.map((u) => [u.id, u]));
+      const masterMap = new Map(masters.map((m) => [m.id, m]));
+
+      for (const chat of chats) {
+        const user = chat.participants.find(
+          (p) => p.role === ChatParticipantRole.USER,
+        );
+        const master = chat.participants.find(
+          (p) => p.role === ChatParticipantRole.MASTER,
+        );
+
+        switch (role) {
+          case 'admin':
+          case 'superadmin':
+            chat['chat_with'] = [
+              user ? userMap.get(user.user_id) : null,
+              master ? masterMap.get(master.user_id) : null,
+            ];
+            break;
+
+          case 'user':
+            chat['chat_with'] = master ? masterMap.get(master.user_id) : null;
+            break;
+
+          case 'master':
+            chat['chat_with'] = user ? userMap.get(user.user_id) : null;
+            break;
+        }
+      }
+
+      return {
+        status_code: 200,
+        message: 'Chat rooms fetched successfully',
+        data: chats,
+      };
+    });
   }
 
   async findOne(id: string, userId: string, userRole: string) {
