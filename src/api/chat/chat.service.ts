@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   ChatParticipants,
@@ -14,6 +14,7 @@ import { DataSource, In } from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { QueryDto } from 'src/common/dto';
 import { ChatParticipantRole } from 'src/common/enum';
+import { Redis } from 'ioredis';
 
 @Injectable()
 export class ChatService {
@@ -23,6 +24,7 @@ export class ChatService {
     @InjectRepository(ChatParticipants)
     private readonly participantsRepository: ChatParticipantsRepository,
     private readonly dataSource: DataSource,
+    @Inject('REDIS_CLIENT') private readonly redis: Redis,
   ) {}
 
   async create(dto: CreateChatDto) {
@@ -76,7 +78,6 @@ export class ChatService {
           )
 
           .leftJoinAndSelect('chat.participants', 'participants')
-          .leftJoinAndSelect('chat.offers', 'offers')
 
           .where(
             role === 'admin' || role === 'superadmin'
@@ -87,7 +88,8 @@ export class ChatService {
                 WHERE cp.user_id = :userId
               )`,
             { userId },
-          );
+          )
+          .leftJoinAndSelect('messages.offer', 'offer');
 
         const [chats, total] = await chatQuery
           .orderBy(`chat.${query.orderBy}`, query.order)
@@ -143,6 +145,27 @@ export class ChatService {
             })
           : [];
 
+        const usersPipeline = this.redis.pipeline();
+
+        users.forEach((user) => {
+          usersPipeline.exists(`online_users:${user.id}`);
+          usersPipeline.get(`last_seen:${user.id}`);
+        });
+
+        const usersData = await usersPipeline.exec();
+
+        let uIndex = 0;
+
+        const usersWithStatusAndLastSeen = users.map((user) => {
+          const onlineRaw = usersData ? usersData[uIndex++][1] : null;
+          const lastSeenRaw = usersData ? usersData[uIndex++][1] : null;
+          return {
+            ...user,
+            online: onlineRaw === 1,
+            last_seen: lastSeenRaw ? lastSeenRaw : null,
+          };
+        });
+
         /* ===============================
         4. Masters
       =============================== */
@@ -164,8 +187,33 @@ export class ChatService {
               .getRawMany()
           : [];
 
-        const userMap = new Map(users.map((u) => [u.id, u]));
-        const masterMap = new Map(masters.map((m) => [m.id, m]));
+        const mastersPipeline = this.redis.pipeline();
+
+        masters.forEach((master) => {
+          mastersPipeline.exists(`online_users:${master.id}`);
+          mastersPipeline.get(`last_seen:${master.id}`);
+        });
+
+        const mastersData = await mastersPipeline.exec();
+
+        let mIndex = 0;
+
+        const mastersWithStatusAndLastSeen = masters.map((master) => {
+          const onlineRaw = mastersData ? mastersData[mIndex++][1] : null;
+          const lastSeenRaw = mastersData ? mastersData[mIndex++][1] : null;
+          return {
+            ...master,
+            online: onlineRaw === 1,
+            last_seen: lastSeenRaw ? lastSeenRaw : null,
+          };
+        });
+
+        const userMap = new Map(
+          usersWithStatusAndLastSeen.map((u) => [u.id, u]),
+        );
+        const masterMap = new Map(
+          mastersWithStatusAndLastSeen.map((m) => [m.id, m]),
+        );
 
         /* ===============================
         5. Unread messages count
@@ -194,7 +242,6 @@ export class ChatService {
           unreadRaw.map((r) => [r.chat_id, r.unread_count]),
         );
 
-        console.log(unreadRaw);
         /* ===============================
         6. chat_with + unread biriktirish
       =============================== */
@@ -260,7 +307,7 @@ export class ChatService {
 
       const chat = await manager.findOne(ChatRooms, {
         where: { id },
-        relations: ['participants', 'offers'],
+        relations: ['participants'],
       });
 
       if (!chat) {
@@ -274,6 +321,8 @@ export class ChatService {
       const [messages, totalMessages] = await manager
         .getRepository(Messages)
         .createQueryBuilder('m')
+
+        .leftJoinAndSelect('m.offer', 'offer')
 
         .leftJoinAndSelect('m.reads', 'reads')
         .leftJoinAndSelect('reads.participant', 'participant')

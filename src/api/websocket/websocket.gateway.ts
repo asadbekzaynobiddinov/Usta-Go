@@ -53,10 +53,16 @@ export class SocketGateway
       dbId: client.user.sub,
     };
     await this.redis.set(`user:${client.user.sub}`, JSON.stringify(clientData));
+    await this.redis.set(`online_users:${client.user.sub}`, 'true');
+    await this.redis.del(`last_seen:${client.user.sub}`);
   }
 
   async handleDisconnect(client: MySocket) {
     await this.redis.del(`user:${client.user.sub}`);
+    await this.redis.del(`online_users:${client.user.sub}`);
+
+    const last_seen = new Date().toISOString();
+    await this.redis.set(`last_seen:${client.user.sub}`, last_seen);
   }
 
   @SubscribeMessage('joinChat')
@@ -74,12 +80,12 @@ export class SocketGateway
     @MessageBody() body: MessageBodyDto,
     @ConnectedSocket() client: MySocket,
   ) {
-    return this.messageHandler.sendMessage(client, body, this.server);
+    return this.messageHandler.sendMessage(client, body);
   }
 
   @SubscribeMessage('message:read')
   readMessage(@MessageBody() body: IdDto, @ConnectedSocket() client: MySocket) {
-    return this.messageHandler.readMessage(body.id, client, this.server);
+    return this.messageHandler.readMessage(body.id, client);
   }
 
   @SubscribeMessage('message:update')
@@ -87,7 +93,7 @@ export class SocketGateway
     @MessageBody() body: UpdateMessageDto,
     @ConnectedSocket() client: MySocket,
   ) {
-    return this.messageHandler.updateMessage(body, client, this.server);
+    return this.messageHandler.updateMessage(body, client);
   }
 
   @SubscribeMessage('message:delete')
@@ -95,16 +101,16 @@ export class SocketGateway
     @MessageBody() body: IdDto,
     @ConnectedSocket() client: MySocket,
   ) {
-    return this.messageHandler.deleteMessage(body.id, client, this.server);
+    return this.messageHandler.deleteMessage(body.id, client);
   }
 
   @SubscribeMessage('start:typing')
   startTyping(@MessageBody() body: IdDto, @ConnectedSocket() client: MySocket) {
-    return this.messageHandler.startTyping(body.id, client, this.server);
+    return this.messageHandler.startTyping(body.id, client);
   }
 
   @SubscribeMessage('stop:typing')
   stopTyping(@MessageBody() body: IdDto, @ConnectedSocket() client: MySocket) {
-    return this.messageHandler.stopTyping(body.id, client, this.server);
+    return this.messageHandler.stopTyping(body.id, client);
   }
 }

@@ -2,7 +2,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Redis from 'ioredis';
-import { Server } from 'socket.io';
 import { MySocket } from 'src/common/types';
 import {
   ChatRooms,
@@ -32,7 +31,7 @@ export class MessageHandler {
     @Inject('REDIS_CLIENT') private readonly redis: Redis,
   ) {}
 
-  async sendMessage(client: MySocket, dto: MessageBodyDto, server: Server) {
+  async sendMessage(client: MySocket, dto: MessageBodyDto) {
     const participants = await this.redis.smembers(
       `chat:${dto.chat_id}:participants`,
     );
@@ -61,7 +60,6 @@ export class MessageHandler {
         chat_room: chat,
         content: dto.content,
         sender,
-        type: dto.type,
       }),
     );
 
@@ -83,7 +81,7 @@ export class MessageHandler {
       const receiverData = await this.redis.get(`user:${userId}`);
 
       if (receiverData) {
-        server.to(`chat:${chat.id}`).emit('message:new', {
+        client.to(`chat:${chat.id}`).emit('message:new', {
           ...newMessage,
           attachments,
         });
@@ -100,7 +98,7 @@ export class MessageHandler {
     };
   }
 
-  async readMessage(messageId: string, client: MySocket, server: Server) {
+  async readMessage(messageId: string, client: MySocket) {
     const message = await this.repository.findOne({
       where: { id: messageId },
       relations: ['chat_room', 'chat_room.participants'],
@@ -142,7 +140,7 @@ export class MessageHandler {
       const receiverData = await this.redis.get(`user:${user.user_id}`);
 
       if (receiverData) {
-        server.to(`chat:${message.chat_room.id}`).emit('message:is_read', {
+        client.to(`chat:${message.chat_room.id}`).emit('message:is_read', {
           ...newRead,
         });
       }
@@ -155,7 +153,7 @@ export class MessageHandler {
     };
   }
 
-  async updateMessage(dto: UpdateMessageDto, client: MySocket, server: Server) {
+  async updateMessage(dto: UpdateMessageDto, client: MySocket) {
     const message = await this.repository.findOne({
       where: { id: dto.id },
       relations: ['chat_room', 'chat_room.participants'],
@@ -182,7 +180,7 @@ export class MessageHandler {
       const receiverData = await this.redis.get(`user:${user.user_id}`);
 
       if (receiverData) {
-        server.to(`chat:${message.chat_room.id}`).emit('message:updated', {
+        client.to(`chat:${message.chat_room.id}`).emit('message:updated', {
           id: message.id,
           content: message.content,
         });
@@ -196,7 +194,7 @@ export class MessageHandler {
     };
   }
 
-  async deleteMessage(id: string, client: MySocket, server: Server) {
+  async deleteMessage(id: string, client: MySocket) {
     const message = await this.repository.findOne({
       where: { id },
       relations: ['chat_room', 'chat_room.participants'],
@@ -224,7 +222,7 @@ export class MessageHandler {
 
       if (receiverData) {
         const parsedReceiver: IReceiverData = JSON.parse(receiverData);
-        server.to(parsedReceiver.id).emit('message:deleted', {
+        client.to(parsedReceiver.id).emit('message:deleted', {
           id: message.id,
         });
       }
@@ -237,7 +235,7 @@ export class MessageHandler {
     };
   }
 
-  async startTyping(chatId: string, client: MySocket, server: Server) {
+  async startTyping(chatId: string, client: MySocket) {
     const chat = await this.chatRepository.findOne({
       where: { id: chatId },
       relations: ['participants'],
@@ -252,7 +250,7 @@ export class MessageHandler {
       throw new WsException('You are not a participant of this chat');
     }
 
-    server.to(`chat:${chatId}`).emit('user:start_typing', {
+    client.to(`chat:${chatId}`).emit('user:start_typing', {
       chatId,
       senderId: client.user.sub,
     });
@@ -264,7 +262,7 @@ export class MessageHandler {
     };
   }
 
-  async stopTyping(chatId: string, client: MySocket, server: Server) {
+  async stopTyping(chatId: string, client: MySocket) {
     const chat = await this.chatRepository.findOne({ where: { id: chatId } });
     if (!chat) {
       throw new WsException('Chat not found');
@@ -276,7 +274,7 @@ export class MessageHandler {
       throw new WsException('You are not a participant of this chat');
     }
 
-    server.to(`chat:${chatId}`).emit('user:stop_typing', {
+    client.to(`chat:${chatId}`).emit('user:stop_typing', {
       chatId,
       senderId: client.user.sub,
     });

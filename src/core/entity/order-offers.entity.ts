@@ -1,9 +1,10 @@
-import { Entity, Column, ManyToOne } from 'typeorm';
+import { Entity, Column, ManyToOne, OneToOne } from 'typeorm';
 import { BaseEntity } from 'src/common/database/BaseEntity';
 import { OrderOfferStatus } from 'src/common/enum';
 import { Orders } from './orders.entity';
 import { MasterProfile } from './master-profile.entity';
 import { ChatRooms } from './chat-rooms.entity';
+import { Messages } from './messages.entity';
 
 @Entity()
 export class OrderOffers extends BaseEntity {
@@ -37,4 +38,10 @@ export class OrderOffers extends BaseEntity {
     nullable: false,
   })
   chat_room: ChatRooms;
+
+  @OneToOne(() => Messages, (message) => message.offer, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  joined_message: Messages;
 }

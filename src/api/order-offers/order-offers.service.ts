@@ -80,6 +80,7 @@ export class OrderOffersService {
         chat_room: newChat,
         type: MessageType.OFFER,
         sender: masterParticipant,
+        offer: newOffer,
       });
 
       await manager.save(newMessage);
